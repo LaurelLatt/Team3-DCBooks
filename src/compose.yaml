@@ -5,11 +5,14 @@
       context: .
       dockerfile: Project498.WebApi/Dockerfile
     environment:
-      - ConnectionStrings__DefaultConnection=Host=db;Database=project498;Username=postgres;Password=postgres
+      - ConnectionStrings__AppConnection=Host=db;Database=project498_app;Username=postgres;Password=postgres
+      - ConnectionStrings__ComicsConnection=Host=db_comics;Database=project498_comics;Username=postgres;Password=postgres
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://0.0.0.0:8080
     depends_on:
       db:
+        condition: service_healthy
+      db_comics:
         condition: service_healthy
     ports:
       - "8080:8080"
@@ -18,11 +21,26 @@
   db:
     image: postgres:latest
     environment:
-      POSTGRES_DB: project498
+      POSTGRES_DB: project498_app
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+
+  db_comics:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: project498_comics
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 2s

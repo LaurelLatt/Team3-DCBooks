@@ -1,4 +1,7 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Project498.WebApi.Data;
 using Project498.WebApi.Services;
 
@@ -11,7 +14,25 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IStringService, StringService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("AppConnection")));
+
+builder.Services.AddDbContext<ComicsDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("ComicsConnection")));
+
+var jwtSecret = builder.Configuration["Jwt:Secret"]!;
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+            ValidateIssuer = false,
+            ValidateAudience = false
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -19,9 +40,15 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
+
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.EnsureCreatedAsync();
-    
+    await DbSeeder.SeedAppAsync(db);
+
+    var comicsDb = scope.ServiceProvider.GetRequiredService<ComicsDbContext>();
+    await comicsDb.Database.EnsureCreatedAsync();
+    await DbSeeder.SeedComicsAsync(comicsDb);
+
     app.MapOpenApi();
     app.UseSwaggerUI(options =>
     {
@@ -30,6 +57,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

@@ -40,13 +40,13 @@ public class UsersController : ControllerBase
     {
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
+        return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, user);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> EditUser(int id, User user)
     {
-        if (id != user.Id) return BadRequest();
+        if (id != user.UserId) return BadRequest();
 
         _context.Entry(user).State = EntityState.Modified;
 
@@ -56,7 +56,7 @@ public class UsersController : ControllerBase
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!_context.Users.Any(u => u.Id == id)) return NotFound();
+            if (!_context.Users.Any(u => u.UserId == id)) return NotFound();
             throw;
         }
 
