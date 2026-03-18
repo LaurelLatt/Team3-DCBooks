@@ -18,6 +18,11 @@ It ensures secure authentication so that users can access protected parts of the
 
     * User provides first name, last name, username, email, and password
     * System validates input fields
+      * email must be in valid format
+      * password must meet minimum length requirements
+      * username must not be empty and within length limits
+      * required fields cannot be blank
+      * leading/trailing spaces are trimmed
     * System checks that username/email is unique
     * System creates a new user account in the database
     * System displays a confirmation message and redirects to login page
@@ -35,6 +40,13 @@ It ensures secure authentication so that users can access protected parts of the
     * Invalid input → show error message
     * Username/email already exists → show error message
     * Incorrect credentials → show error message
+
+4**Logout**
+
+   * User can click Logout from User Info page
+   * System clears data
+   * User would be redirected to login or home page
+   * protected pages become inaccessible until user logs in again
 
 ---
 
@@ -63,6 +75,9 @@ This feature allows users to browse the comic library and search/filter comics b
     * Users can input search terms for title, character, issue number, publisher, or year published
     * System filters comics and updates list dynamically
     * Users can combine multiple filters
+    * partial matches are supported
+    * empty filters return all comics
+    * filters are case-insensitive 
 
 3. **View Details**
 
@@ -127,7 +142,7 @@ This feature allows a logged-in user to view all comics they have currently borr
 
 1. **View My Checkouts**
 
-    * System calls API (`GET /api/checkouts/my`) using user’s JWT token
+    * System calls API (`GET /api/checkouts/{id}`) using user’s JWT token
     * System displays each active checkout with: comic title, checkout date, due date, and status
 
 2. **Detail Navigation**
@@ -141,3 +156,17 @@ This feature allows a logged-in user to view all comics they have currently borr
 
 ---
 
+## Feature 5: Return Comic (future enhancement)
+
+### Description
+Allows user to return a previously checked-out comic.
+
+1. **Functional Requirements**
+
+   * user an return a comic from the current checkouts page
+   * system verifies the comic belongs to the user
+   * system sets return_date
+   * comic becomes available again
+   * user receives confirmation message
+
+---
