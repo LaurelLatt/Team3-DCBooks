@@ -10,33 +10,43 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="a2026516-85f8-4393-a111-6a4ef1119bab" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Project498.WebApi/wwwroot/createAccount.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/Project498.WebApi.Tests.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/Project498.WebApi.Tests.csproj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/CoverletSourceRootsMapping_Project498.WebApi.Tests" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/CoverletSourceRootsMapping_Project498.WebApi.Tests" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/UserControllerTests.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/UserControllerTests.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.Tests.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.Tests.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.Tests.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.Tests.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.staticwebassets.endpoints.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.staticwebassets.endpoints.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.staticwebassets.runtime.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/bin/Debug/net10.0/Project498.WebApi.staticwebassets.runtime.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.AssemblyInfo.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.GeneratedMSBuildEditorConfig.editorconfig" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.GeneratedMSBuildEditorConfig.editorconfig" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.assets.cache" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.assets.cache" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.csproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Project498.WebApi.Tests.csproj.nuget.dgspec.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Project498.WebApi.Tests.csproj.nuget.dgspec.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Project498.WebApi.Tests.csproj.nuget.g.props" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Project498.WebApi.Tests.csproj.nuget.g.props" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Project498.WebApi.Tests.csproj.nuget.g.targets" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Project498.WebApi.Tests.csproj.nuget.g.targets" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/project.assets.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/project.assets.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/project.nuget.cache" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/project.nuget.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/project.packagespec.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/project.packagespec.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/rider.project.restore.info" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/rider.project.restore.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.sourcelink.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/Project498.WebApi.Tests.sourcelink.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/ref/Project498.WebApi.Tests.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/ref/Project498.WebApi.Tests.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/refint/Project498.WebApi.Tests.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi.Tests/obj/Debug/net10.0/refint/Project498.WebApi.Tests.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/bin/Debug/net10.0/Project498.WebApi.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/bin/Debug/net10.0/Project498.WebApi.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/bin/Debug/net10.0/Project498.WebApi.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/bin/Debug/net10.0/Project498.WebApi.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/bin/Debug/net10.0/Project498.WebApi.staticwebassets.endpoints.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/bin/Debug/net10.0/Project498.WebApi.staticwebassets.endpoints.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/bin/Debug/net10.0/Project498.WebApi.staticwebassets.runtime.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/bin/Debug/net10.0/Project498.WebApi.staticwebassets.runtime.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.AssemblyInfo.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.AssemblyInfo.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.AssemblyInfoInputs.cache" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.AssemblyInfoInputs.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.GeneratedMSBuildEditorConfig.editorconfig" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.GeneratedMSBuildEditorConfig.editorconfig" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.assets.cache" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.assets.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.csproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.csproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Project498.WebApi.csproj.nuget.dgspec.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Project498.WebApi.csproj.nuget.dgspec.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Project498.WebApi.csproj.nuget.g.props" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Project498.WebApi.csproj.nuget.g.props" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Project498.WebApi.csproj.nuget.g.targets" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Project498.WebApi.csproj.nuget.g.targets" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/project.assets.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/project.assets.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/project.nuget.cache" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/project.nuget.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/project.packagespec.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/project.packagespec.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/rider.project.restore.info" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/rider.project.restore.info" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.csproj.FileListAbsolute.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.csproj.FileListAbsolute.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.sourcelink.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/Project498.WebApi.sourcelink.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/compressed/4340v7emj4-{0}-tfamgfwz55-tfamgfwz55.gz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/rbcswa.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/rbcswa.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/ref/Project498.WebApi.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/ref/Project498.WebApi.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/refint/Project498.WebApi.dll" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/refint/Project498.WebApi.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/rjimswa.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/rjimswa.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/rjsmcshtml.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/rjsmrazor.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/rjsmrazor.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/rpswa.dswa.cache.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/rpswa.dswa.cache.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/staticwebassets.build.endpoints.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/staticwebassets.build.endpoints.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/staticwebassets.build.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/staticwebassets.build.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/staticwebassets.build.json.cache" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/staticwebassets.build.json.cache" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/staticwebassets.development.json" beforeDir="false" afterPath="$PROJECT_DIR$/Project498.WebApi/obj/Debug/net10.0/staticwebassets.development.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -229,7 +239,7 @@
       <workItem from="1775096890480" duration="495000" />
       <workItem from="1775097389854" duration="1261000" />
       <workItem from="1775098670476" duration="321000" />
-      <workItem from="1775160989773" duration="14809000" />
+      <workItem from="1775160989773" duration="22217000" />
     </task>
     <task id="LOCAL-00001" summary="api spec doc">
       <option name="closed" value="true" />
@@ -279,7 +289,23 @@
       <option name="project" value="LOCAL" />
       <updated>1775345539437</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="adding all of the extra project files">
+      <option name="closed" value="true" />
+      <created>1775443746743</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1775443746743</updated>
+    </task>
+    <task id="LOCAL-00008" summary="added create account page/functionality">
+      <option name="closed" value="true" />
+      <created>1775461314554</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1775461314554</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -306,7 +332,9 @@
     <MESSAGE value="Backend spec" />
     <MESSAGE value="Login page, no data" />
     <MESSAGE value="Connected login to data and set up unit test for login function" />
-    <option name="LAST_COMMIT_MESSAGE" value="Connected login to data and set up unit test for login function" />
+    <MESSAGE value="adding all of the extra project files" />
+    <MESSAGE value="added create account page/functionality" />
+    <option name="LAST_COMMIT_MESSAGE" value="added create account page/functionality" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

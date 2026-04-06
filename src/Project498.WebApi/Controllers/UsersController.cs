@@ -38,6 +38,22 @@ public class UsersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<User>> AddUser(User user)
     {
+        if (string.IsNullOrWhiteSpace(user.Username) ||
+            string.IsNullOrWhiteSpace(user.Password))
+        {
+            return BadRequest("Username and password are required");
+        }
+
+        if (await _context.Users.AnyAsync(u => u.Username == user.Username))
+        {
+            return BadRequest("Username already exists");
+        }
+
+        if (await _context.Users.AnyAsync(u => u.Email == user.Email))
+        {
+            return BadRequest("Email already exists");
+        }
+
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, user);
@@ -78,6 +94,13 @@ public class UsersController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<User>> Login([FromBody] User loginData)
     {
+        // Validate input
+        if (string.IsNullOrWhiteSpace(loginData.Username) ||
+            string.IsNullOrWhiteSpace(loginData.Password))
+        {
+            return BadRequest("Username and password are required");
+        }
+        
         var user = await _context.Users
             .FirstOrDefaultAsync(u => 
                 u.Username == loginData.Username &&

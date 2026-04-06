@@ -137,6 +137,7 @@
 /Users/laurellatt/Documents/school/se498/Team3-DCBooks/src/Project498.WebApi/obj/Debug/net10.0/compressed/vn4zk1vuqw-{0}-boweid95hs-boweid95hs.gz
 /Users/laurellatt/Documents/school/se498/Team3-DCBooks/src/Project498.WebApi/obj/Debug/net10.0/compressed/p8on2wh7tm-{0}-ya0e50z4io-ya0e50z4io.gz
 /Users/laurellatt/Documents/school/se498/Team3-DCBooks/src/Project498.WebApi/obj/Debug/net10.0/compressed/twx9w81ca9-{0}-e70s78nv9m-e70s78nv9m.gz
-/Users/laurellatt/Documents/school/se498/Team3-DCBooks/src/Project498.WebApi/obj/Debug/net10.0/compressed/4340v7emj4-{0}-tfamgfwz55-tfamgfwz55.gz
 /Users/laurellatt/Documents/school/se498/Team3-DCBooks/src/Project498.WebApi/obj/Debug/net10.0/compressed/5tiuhvsfgs-{0}-j2varkonff-j2varkonff.gz
 /Users/laurellatt/Documents/school/se498/Team3-DCBooks/src/Project498.WebApi/obj/Debug/net10.0/compressed/jjx898ir2b-{0}-d8e6kqj7yk-d8e6kqj7yk.gz
+/Users/laurellatt/Documents/school/se498/Team3-DCBooks/src/Project498.WebApi/obj/Debug/net10.0/compressed/4340v7emj4-{0}-tyu6bc7w9m-tyu6bc7w9m.gz
+/Users/laurellatt/Documents/school/se498/Team3-DCBooks/src/Project498.WebApi/obj/Debug/net10.0/compressed/rmmvmsru6r-{0}-f6sl3dloat-f6sl3dloat.gz
