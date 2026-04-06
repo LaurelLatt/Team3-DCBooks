@@ -1,0 +1,9 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=29533e79_002Dbed6_002D4ff0_002D8fb0_002D531de936f464/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="Login_ReturnsUser_WhenCredentialsValid" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;TestAncestor&gt;
+    &lt;TestId&gt;xUnit::77EE780B-6079-47BE-B0B7-9BAB6CE6EB65::net10.0::Project498.WebApi.Tests.UserControllerTests.Login_ReturnsUser_WhenCredentialsValid&lt;/TestId&gt;
+  &lt;/TestAncestor&gt;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=3c7e613a_002D714b_002D41a6_002Da2ea_002Dd56142e129c6/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from &amp;lt;Project498.WebApi.Tests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;Project Location="/Users/laurellatt/Documents/school/se498/Team3-DCBooks/src/Project498.WebApi.Tests" Presentation="&amp;lt;Project498.WebApi.Tests&amp;gt;" /&gt;
+&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
