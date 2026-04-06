@@ -74,4 +74,20 @@ public class UsersController : ControllerBase
 
         return NoContent();
     }
+    
+    [HttpPost("login")]
+    public async Task<ActionResult<User>> Login([FromBody] User loginData)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => 
+                u.Username == loginData.Username &&
+                u.Password == loginData.Password);
+
+        if (user == null)
+        {
+            return Unauthorized("Invalid username or password");
+        }
+
+        return Ok(user);
+    }
 }
