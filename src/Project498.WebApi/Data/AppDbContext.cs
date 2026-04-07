@@ -26,6 +26,8 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Username).IsRequired().HasMaxLength(100).HasColumnName("username");
             entity.Property(e => e.Email).IsRequired().HasMaxLength(100).HasColumnName("email");
             entity.Property(e => e.Password).IsRequired().HasColumnName("password");
+            entity.HasIndex(e => e.Username).IsUnique();
+            entity.HasIndex(e => e.Email).IsUnique();
         });
 
         modelBuilder.Entity<Checkout>(entity =>
