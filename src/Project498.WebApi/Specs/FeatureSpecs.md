@@ -9,6 +9,7 @@ It ensures secure authentication so that users can access protected parts of the
 
 * Includes user registration, login, and logout
 * Handles validation of required fields, uniqueness of username/email
+* Uniqueness of username and email is also enforced in the database (unique indexes on those columns)
 * Uses JWT Bearer token for session management
 * Does not include password reset or multi-factor authentication
 
@@ -41,7 +42,7 @@ It ensures secure authentication so that users can access protected parts of the
     * Username/email already exists → show error message
     * Incorrect credentials → show error message
 
-4**Logout**
+4. **Logout**
 
    * User can click Logout from User Info page
    * System clears data
@@ -68,7 +69,7 @@ This feature allows users to browse the comic library and search/filter comics b
 1. **View Comics**
 
     * Display a list of all comics from the API (`GET /api/comics`)
-    * Include key attributes: title, issue number, year published, publisher, and status
+    * Include key attributes: title, issue number, year published, publisher, and status (`available` or `checked_out`)
 
 2. **Search / Filter**
 
@@ -102,6 +103,7 @@ This feature enables a logged-in user to borrow an available comic, creating a r
 * Users must be logged in
 * Only available comics can be checked out
 * The system tracks the checkout in a database and updates comic status
+* Comic `status` in the database is constrained to `available` or `checked_out`
 * Does **not** handle reservations or overdue notifications
 
 ### Functional Requirements
@@ -112,7 +114,7 @@ This feature enables a logged-in user to borrow an available comic, creating a r
     * System verifies comic exists and is available
     * System sends request to API (`POST /api/checkouts`)
     * System creates a checkout record including: comic_id, user_id, checkout_date, due_date, and status = `"checked_out"`
-    * Comic status is updated to `"unavailable"`
+    * Comic `status` is updated from `"available"` to `"checked_out"`
 
 2. **Confirmation**
 
@@ -120,7 +122,7 @@ This feature enables a logged-in user to borrow an available comic, creating a r
 
 3. **Error Handling**
 
-    * Comic is unavailable → show "Comic is already checked out"
+    * Comic is not available (e.g. already checked out) → show "Comic is already checked out"
     * Invalid request → show error message
     * API failure → show error message
 
@@ -163,10 +165,10 @@ Allows user to return a previously checked-out comic.
 
 1. **Functional Requirements**
 
-   * user an return a comic from the current checkouts page
-   * system verifies the comic belongs to the user
-   * system sets return_date
-   * comic becomes available again
-   * user receives confirmation message
+   * User can return a comic from the current checkouts page
+   * System verifies the comic belongs to the user
+   * System sets return_date
+   * Comic becomes available again (`status` returns to `"available"`)
+   * User receives confirmation message
 
 ---

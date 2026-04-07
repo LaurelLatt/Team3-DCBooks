@@ -28,6 +28,11 @@ public class ComicsDbContext : DbContext
             entity.Property(e => e.Publisher).IsRequired().HasMaxLength(100).HasColumnName("publisher");
             entity.Property(e => e.Status).IsRequired().HasColumnName("status");
             entity.Property(e => e.CheckedOutBy).HasColumnName("checked_out_by");
+            
+            entity.ToTable(t => t.HasCheckConstraint(
+                "CK_Comics_Status",
+                "status IN ('available', 'checked_out')"
+            ));
         });
 
         modelBuilder.Entity<Character>(entity =>
