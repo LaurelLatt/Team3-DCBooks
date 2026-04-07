@@ -14,8 +14,8 @@ Creates a new user account.
 
 ```json
 {
-  "first_name": "name",
-  "last_name": "name",
+  "firstName": "name",
+  "lastName": "name",
   "username": "username",
   "email": "user@email.com",
   "password": "password123"
@@ -29,6 +29,17 @@ Creates a new user account.
   "message": "User registered successfully"
 }
 ```
+
+**Error Response (example)**
+
+```json
+{
+  "code": "USERNAME_EXISTS",
+  "message": "Username already exists."
+}
+```
+
+Username and email are unique at both the application and database levels. Duplicate values return `409 Conflict`.
 
 ---
 
@@ -51,7 +62,17 @@ Authenticates a user and returns a Bearer token.
 
 ```json
 {
+  "access_token": "jwt_token_here",
   "token": "jwt_token_here"
+}
+```
+
+**Error Response (example)**
+
+```json
+{
+  "code": "INVALID_CREDENTIALS",
+  "message": "Invalid username or password."
 }
 ```
 
@@ -70,20 +91,26 @@ Returns a list of all comics.
 ```json
 [
   {
-    "comic_id": 1,
+    "comicId": 1,
     "title": "Batman",
-    "issue_number": 1,
-    "year_published": 2020,
+    "issueNumber": 1,
+    "yearPublished": 2020,
     "publisher": "DC",
-    "status": "available"
+    "status": "available",
+    "checkedOutBy": null,
+    "characterIds": [1, 4],
+    "characterNames": ["Batman", "The Flash"]
   },
   {
-    "comic_id": 2,
+    "comicId": 2,
     "title": "Nightwing",
-    "issue_number": 1,
-    "year_published": 2020,
+    "issueNumber": 1,
+    "yearPublished": 2020,
     "publisher": "DC",
-    "status": "available"
+    "status": "available",
+    "checkedOutBy": null,
+    "characterIds": [2],
+    "characterNames": ["Superman"]
   }
 ]
 ```
@@ -159,18 +186,18 @@ GET /api/comics?publisher=DC&year_published=2020
 
 ```json
 {
-  "comic_id": 1
+  "comicId": 1
 }
 ```
 
 **Response**
 ```json
 {
-  "checkout_id": 10,
-  "comic_id": 1,
-  "user_id": 5,
-  "checkout_date": "2026-03-18",
-  "due_date": "2026-04-01",
+  "checkoutId": 10,
+  "comicId": 1,
+  "userId": 5,
+  "checkoutDate": "2026-03-18T00:00:00Z",
+  "dueDate": "2026-04-01T00:00:00Z",
   "status": "checked_out"
 }
 ```
@@ -181,11 +208,21 @@ GET /api/comics?publisher=DC&year_published=2020
 
 **PUT /api/checkouts/{id}/return**
 
+Compatibility route also supported:
+
+**PUT /api/checkouts/{id}**
+
 **Response** 
 
 ```json
-{ 
-  "message": "Comic returned successfully"
+{
+  "checkoutId": 10,
+  "comicId": 1,
+  "userId": 5,
+  "checkoutDate": "2026-03-18T00:00:00Z",
+  "dueDate": "2026-04-01T00:00:00Z",
+  "returnDate": "2026-03-25T00:00:00Z",
+  "status": "returned"
 }
 ```
 
@@ -193,19 +230,17 @@ GET /api/comics?publisher=DC&year_published=2020
 
 ### Get User Checkouts
 
-**GET /api/checkouts/user/{user_id}**
-
-**Authorization:** Bearer Token required
+**GET /api/checkouts/user/{userId}**
 
 **Response**
 
 ```json
 {
-  "checkout_id": 10,
-  "comic_id": 1,
-  "checkout_date": "2026-03-01",
-  "due_date": "2026-03-15",
-  "return_date": null,
+  "checkoutId": 10,
+  "comicId": 1,
+  "checkoutDate": "2026-03-01T00:00:00Z",
+  "dueDate": "2026-03-15T00:00:00Z",
+  "returnDate": null,
   "status": "checked_out"
 }
 ```
@@ -261,11 +296,35 @@ GET /api/comics?publisher=DC&year_published=2020
     * GET /api/comics
     * GET /api/comics/{id}
     * GET /api/characters
+    * GET /api/characters/{id}
+    * GET /api/checkouts
+    * GET /api/checkouts/{id}
+    * GET /api/checkouts/user/{userId}
 
 * Protected endpoints:
 
-    * All POST, PUT, DELETE routes
-    * Checkout operations
+    * POST /api/comics
+    * PUT /api/comics/{id}
+    * DELETE /api/comics/{id}
+    * POST /api/characters
+    * PUT /api/characters/{id}
+    * DELETE /api/characters/{id}
+    * POST /api/checkouts
+    * PUT /api/checkouts/{id}
+    * PUT /api/checkouts/{id}/return
+
+---
+
+# Error Format
+
+All API validation/domain errors return this JSON shape:
+
+```json
+{
+  "code": "ERROR_CODE",
+  "message": "Human readable message."
+}
+```
 
 ---
 

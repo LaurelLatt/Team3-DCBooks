@@ -29,7 +29,7 @@ public class UsersController : ControllerBase
 
         if (user == null)
         {
-            return NotFound();
+            return NotFound(new ErrorResponse("USER_NOT_FOUND", $"User {id} was not found."));
         }
 
         return user;
@@ -41,17 +41,17 @@ public class UsersController : ControllerBase
         if (string.IsNullOrWhiteSpace(user.Username) ||
             string.IsNullOrWhiteSpace(user.Password))
         {
-            return BadRequest("Username and password are required");
+            return BadRequest(new ErrorResponse("VALIDATION_ERROR", "Username and password are required."));
         }
 
         if (await _context.Users.AnyAsync(u => u.Username == user.Username))
         {
-            return BadRequest("Username already exists");
+            return Conflict(new ErrorResponse("USERNAME_EXISTS", "Username already exists."));
         }
 
         if (await _context.Users.AnyAsync(u => u.Email == user.Email))
         {
-            return BadRequest("Email already exists");
+            return Conflict(new ErrorResponse("EMAIL_EXISTS", "Email already exists."));
         }
 
         user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
@@ -63,7 +63,10 @@ public class UsersController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> EditUser(int id, User user)
     {
-        if (id != user.UserId) return BadRequest();
+        if (id != user.UserId)
+        {
+            return BadRequest(new ErrorResponse("VALIDATION_ERROR", "Route id must match user id."));
+        }
 
         _context.Entry(user).State = EntityState.Modified;
 
@@ -73,7 +76,11 @@ public class UsersController : ControllerBase
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!_context.Users.Any(u => u.UserId == id)) return NotFound();
+            if (!_context.Users.Any(u => u.UserId == id))
+            {
+                return NotFound(new ErrorResponse("USER_NOT_FOUND", $"User {id} was not found."));
+            }
+
             throw;
         }
 
@@ -84,7 +91,10 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> DeleteUser(int id)
     {
         var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
+        if (user == null)
+        {
+            return NotFound(new ErrorResponse("USER_NOT_FOUND", $"User {id} was not found."));
+        }
 
         _context.Users.Remove(user);
         await _context.SaveChangesAsync();

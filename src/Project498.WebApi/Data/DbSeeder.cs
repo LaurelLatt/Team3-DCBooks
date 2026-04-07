@@ -6,8 +6,19 @@ public static class DbSeeder
 {
     public static async Task SeedAppAsync(AppDbContext db)
     {
-        // No app seed data for now
-        await Task.CompletedTask;
+        if (!db.Users.Any())
+        {
+            db.Users.Add(new User
+            {
+                FirstName = "Demo",
+                LastName = "Demoson",
+                Username = "demo",
+                Email = "demo@demo.com",
+                Password = BCrypt.Net.BCrypt.HashPassword("Demo123")
+            });
+
+            await db.SaveChangesAsync();
+        }
     }
 
     public static async Task SeedComicsAsync(ComicsDbContext comicsDb)

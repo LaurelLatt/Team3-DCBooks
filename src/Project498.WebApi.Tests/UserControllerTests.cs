@@ -75,7 +75,8 @@ public class UserControllerTests
         var result = await controller.AddUser(newUser);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("Username and password are required", badRequest.Value);
+        var error = Assert.IsType<ErrorResponse>(badRequest.Value);
+        Assert.Equal("VALIDATION_ERROR", error.Code);
     }
 
     [Fact]
@@ -91,8 +92,9 @@ public class UserControllerTests
         };
         
         var result = await controller.AddUser(newUser);
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("Username already exists", badRequest.Value);
+        var conflict = Assert.IsType<ConflictObjectResult>(result.Result);
+        var error = Assert.IsType<ErrorResponse>(conflict.Value);
+        Assert.Equal("USERNAME_EXISTS", error.Code);
     }
     
     [Fact]
@@ -108,8 +110,9 @@ public class UserControllerTests
         };
         
         var result = await controller.AddUser(newUser);
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result.Result);
-        Assert.Equal("Email already exists", badRequest.Value);
+        var conflict = Assert.IsType<ConflictObjectResult>(result.Result);
+        var error = Assert.IsType<ErrorResponse>(conflict.Value);
+        Assert.Equal("EMAIL_EXISTS", error.Code);
     }
 
     [Fact]
