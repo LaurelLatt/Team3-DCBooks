@@ -2,3 +2,7 @@
 bin/
 obj/
 .idea/
+
+src/.idea
+src/Project498.WebApi/obj
+src/Project498.WebApi.Tests/obj
