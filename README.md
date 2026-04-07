@@ -48,3 +48,42 @@ cd src
 dotnet build Project498.sln
 dotnet test Project498.sln
 ```
+
+---
+
+## Data integrity note
+
+This project uses two databases:
+
+- `project498_app` for users/checkouts
+- `project498_comics` for comics/characters
+
+Because `Checkouts.comicId` and `Comics.comicId` live in different databases, there is no cross-database SQL foreign key for comic ownership in checkouts. Integrity is enforced at the application layer in the API (e.g., checkout/return endpoints validate comic existence and status before writing checkout records).
+
+---
+
+## Local DB reset / reseed policy
+
+Current local development uses ephemeral containers (no declared volumes), so rebuilding usually yields a clean database and reruns seeding.
+
+Standard reset flow:
+
+```bash
+cd src
+podman compose -f compose.yaml down
+podman compose -f compose.yaml up --build
+```
+
+Default app DB seed user (created when app DB is empty):
+
+- Username: `demo`
+- Password: `Demo123`
+- Email: `demo@demo.com`
+
+If persistent volumes are introduced later, use:
+
+```bash
+cd src
+podman compose -f compose.yaml down -v
+podman compose -f compose.yaml up --build
+```
