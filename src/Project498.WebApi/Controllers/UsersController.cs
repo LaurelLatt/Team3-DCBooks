@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project498.WebApi.Data;
 using Project498.WebApi.Models;
+using Project498.WebApi.Models.DTOs;
 
 namespace Project498.WebApi.Controllers;
 
@@ -60,29 +61,23 @@ public class UsersController : ControllerBase
         return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, user);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> EditUser(int id, User user)
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> EditUser(int id, UpdateUserDto dto)
     {
-        if (id != user.UserId)
+        var user = await _context.Users.FindAsync(id);
+        
+        if (user == null)
         {
-            return BadRequest(new ErrorResponse("VALIDATION_ERROR", "Route id must match user id."));
+            return NotFound(new ErrorResponse("USER_NOT_FOUND", $"User {id} was not found."));
         }
 
-        _context.Entry(user).State = EntityState.Modified;
+        user.FirstName = dto.FirstName ?? user.FirstName;
+        user.LastName = dto.LastName ?? user.LastName;
+        user.Username = dto.Username ?? user.Username;
+        user.Email = dto.Email ?? user.Email;
+        
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!_context.Users.Any(u => u.UserId == id))
-            {
-                return NotFound(new ErrorResponse("USER_NOT_FOUND", $"User {id} was not found."));
-            }
-
-            throw;
-        }
+        await _context.SaveChangesAsync();
 
         return NoContent();
     }
@@ -100,5 +95,39 @@ public class UsersController : ControllerBase
         await _context.SaveChangesAsync();
 
         return NoContent();
+    }
+    
+    [HttpGet("check-username")]
+    public async Task<IActionResult> CheckUsername(string username)
+    {
+        bool exists = await _context.Users.AnyAsync(u => u.Username == username);
+        return Ok(new { exists });
+    }
+
+    [HttpGet("check-email")]
+    public async Task<IActionResult> CheckEmail(string email)
+    {
+        bool exists = await _context.Users.AnyAsync(u => u.Email == email);
+        return Ok(new { exists });
+    }
+    
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
+    {
+        var user = await _context.Users.FindAsync(dto.UserId);
+
+        if (user == null)
+            return NotFound();
+
+        if (!BCrypt.Net.BCrypt.Verify(dto.OldPassword, user.Password))
+            return BadRequest("Incorrect old password");
+
+        if (dto.NewPassword != dto.ConfirmPassword)
+            return BadRequest("Passwords do not match");
+
+        user.Password = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        await _context.SaveChangesAsync();
+
+        return Ok("Password updated");
     }
 }
