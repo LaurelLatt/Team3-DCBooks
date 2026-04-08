@@ -11,9 +11,27 @@
     <!-- CSS -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100 bg-body-tertiary">
+<body>
 
-<main class="container">
+<!-- Bootstrap navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">DC Comics</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="index.html">Home</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<main class="container d-flex align-items-center justify-content-center vh-100 bg-body-tertiary">
     <div class="card p-4 shadow-sm" style="max-width: 400px; margin: auto;">
         <form id="loginForm">
             <h1 class="h3 mb-4 fw-normal text-center">Please sign in</h1>
