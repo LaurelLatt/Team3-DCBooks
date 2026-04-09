@@ -2,106 +2,136 @@ function getUserIdFromToken() {
     const token = localStorage.getItem("accessToken");
     if (!token) return null;
 
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    console.log(payload);
-    return payload.user_id;
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+
+        // Try several possible claim names
+        return (
+            payload.user_id ||
+            payload.nameid ||
+            payload.sub ||
+            payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+            null
+        );
+    } catch (error) {
+        console.error("Invalid token:", error);
+        return null;
+    }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const notLoggedInDiv = document.getElementById('not-logged-in');
-    const comicsListDiv = document.getElementById('comics-list');
+    const notLoggedInDiv = document.getElementById("not-logged-in");
+    const comicsListDiv = document.getElementById("comics-list");
 
     const token = localStorage.getItem("accessToken");
     const userId = getUserIdFromToken();
-    
 
-    // fetch user data from your backend
-    const response = await fetch(`/api/users/${userId}`);
-    const user = await response.json();
+    console.log("Token found:", !!token);
+    console.log("Decoded userId:", userId);
 
     if (!token || !userId) {
-        notLoggedInDiv.classList.remove('d-none');
+        notLoggedInDiv.classList.remove("d-none");
         return;
     }
 
     try {
-        const USE_MOCK = false;
+        let checkouts = [];
 
-        let checkouts;
+        // Try the user-specific endpoint first
+        const userResponse = await fetch(`http://localhost:8080/api/checkouts/user/${userId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
 
-        if (USE_MOCK) {
-            checkouts = [
-                {
-                    checkoutId: 1,
-                    comicId: 101,
-                    checkoutDate: "2026-04-01T00:00:00Z",
-                    dueDate: "2026-04-15T00:00:00Z",
-                    ComicTitle: "Batman and Robin"
-                },
-                {
-                    checkoutId: 2,
-                    comicId: 102,
-                    checkoutDate: "2026-04-01T00:00:00Z",
-                    dueDate: "2026-04-15T00:00:00Z",
-                    ComicTitle: "Wonder Woman"
-                }
-            ];
+        if (userResponse.ok) {
+            checkouts = await userResponse.json();
         } else {
-            const response = await fetch(`/api/checkout/user/${userId}`, {
+            console.warn("User checkout endpoint failed, trying fallback.");
+
+            // Fallback: get all checkouts and filter client-side
+            const allResponse = await fetch(`http://localhost:8080/api/checkouts`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             });
 
-            checkouts = await response.json();
+            if (!allResponse.ok) {
+                const errorText = await allResponse.text();
+                throw new Error(`Failed to load checkouts. ${errorText}`);
+            }
+
+            const allCheckouts = await allResponse.json();
+
+            checkouts = allCheckouts.filter(c =>
+                String(c.userId) === String(userId) &&
+                (!c.returnDate) &&
+                String(c.status).toLowerCase() !== "returned"
+            );
         }
 
-        // Token invalid / expired
-        if (response.status === 401) {
-            notLoggedInDiv.classList.remove('d-none');
-            return;
-        }
+        console.log("Checkouts loaded:", checkouts);
 
-        // No comics
         if (!checkouts || checkouts.length === 0) {
-            emptyMessage.classList.remove('d-none');
+            comicsListDiv.innerHTML = `
+                <div class="alert alert-info">
+                    You have no checked out comics right now.
+                </div>
+            `;
             return;
         }
 
-        // Render comics
-        checkouts.forEach(c => {
-            const item = document.createElement('div');
-            item.className =
-                'list-group-item d-flex justify-content-between align-items-center';
+        for (const c of checkouts) {
+            let comicTitle = `Comic #${c.comicId}`;
+
+            try {
+                const comicResponse = await fetch(`http://localhost:8080/api/comics/${c.comicId}`);
+                if (comicResponse.ok) {
+                    const comic = await comicResponse.json();
+                    comicTitle = comic.title;
+                }
+            } catch (error) {
+                console.error("Could not load comic title:", error);
+            }
+
+            const item = document.createElement("div");
+            item.className = "list-group-item d-flex justify-content-between align-items-center";
 
             item.innerHTML = `
-        <div>
-          <strong>Title:</strong> ${c.ComicTitle}<br>
-          <small>Due: ${new Date(c.dueDate).toLocaleDateString()}</small>
-        </div>
-        <button id="returnButton" class="btn btn-sm btn-danger">Return</button>
-      `;
+                <div>
+                    <strong>Title:</strong> ${comicTitle}<br>
+                    <small>Due: ${new Date(c.dueDate).toLocaleDateString()}</small>
+                </div>
+                <button class="btn btn-sm btn-danger">Return</button>
+            `;
 
-            item.querySelector('button').addEventListener('click', async () => {
-                await returnComic(c.checkoutId, item, token);
+            const returnButton = item.querySelector("button");
+            returnButton.addEventListener("click", async () => {
+                await returnComic(c.checkoutId, item, returnButton, token);
             });
 
             comicsListDiv.appendChild(item);
-        });
+        }
 
     } catch (err) {
         console.error("Error loading checkouts:", err);
+        comicsListDiv.innerHTML = `
+            <div class="alert alert-danger">
+                Could not load checked out comics.
+            </div>
+        `;
     }
 });
 
-async function returnComic(checkoutId, element, token) {
+async function returnComic(checkoutId, element, button, token) {
     try {
-        returnButton.disabled = true;
-        returnButton.textContent = "Returning...";
-        const response = await fetch(`/api/checkout/${checkoutId}`, {
-            method: 'PUT', // 🔥 THIS is the important fix
+        button.disabled = true;
+        button.textContent = "Returning...";
+
+        const response = await fetch(`http://localhost:8080/api/checkouts/${checkoutId}`, {
+            method: "PUT",
             headers: {
-                "Authorization": `Bearer ${token}`
+                Authorization: `Bearer ${token}`
             }
         });
 
@@ -109,10 +139,17 @@ async function returnComic(checkoutId, element, token) {
             element.remove();
         } else if (response.status === 409) {
             alert("This comic was already returned.");
+            button.disabled = false;
+            button.textContent = "Return";
         } else {
             alert("Failed to return comic.");
+            button.disabled = false;
+            button.textContent = "Return";
         }
     } catch (err) {
-        console.error(err);
+        console.error("Error returning comic:", err);
+        alert("Something went wrong while returning the comic.");
+        button.disabled = false;
+        button.textContent = "Return";
     }
 }
