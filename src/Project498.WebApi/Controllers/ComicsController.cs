@@ -134,6 +134,8 @@ public class ComicsController(ComicsDbContext comicsDb) : ControllerBase
         {
             return linksResult;
         }
+        
+        await comicsDb.SaveChangesAsync();
 
         return await GetComic(comic.ComicId);
     }
