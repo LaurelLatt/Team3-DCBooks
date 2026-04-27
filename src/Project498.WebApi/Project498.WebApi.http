@@ -1,49 +1,57 @@
+# DC Books Integration Tests
+# Run with: httpyac Project498.WebApi.http --all --env container
+# Requires the app to be running via podman compose (both db and db_comics containers healthy).
+# All tests use seeded data — no setup or teardown needed.
+#
+# Environments (http-client.env.json):
+#   local     -> http://localhost:5031  (dotnet run)
+#   container -> http://localhost:8080  (podman compose)
+
 ###
 
-# Strings - reverse: simple
-GET {{HostAddress}}/strings/reverse/hello
+# Comics - Get all (comics DB / ComicsDbContext)
+# Expects 5 seeded comics (Batman, Superman, Wonder Woman, Flash, Green Lantern)
+GET {{HostAddress}}/api/comics
 Accept: application/json
 
 ###
 
-# Strings - reverse: palindrome
-GET {{HostAddress}}/strings/reverse/racecar
+# Comics - Get by ID
+# Expects: Batman: Year One, issue 1, 1987, status available
+GET {{HostAddress}}/api/comics/1
 Accept: application/json
 
 ###
 
-# Strings - reverse: with space
-GET {{HostAddress}}/strings/reverse/hello%20world
+# Characters - Get all (comics DB / ComicsDbContext)
+# Expects 5 seeded characters
+GET {{HostAddress}}/api/characters
 Accept: application/json
 
 ###
 
-# Strings - reverse: with double space
-GET {{HostAddress}}/strings/reverse/hello%20%20world
+# Characters - Get by ID
+# Expects: Bruce Wayne / Batman
+GET {{HostAddress}}/api/characters/1
 Accept: application/json
 
 ###
 
-# Strings - reverse: leading space
-GET {{HostAddress}}/strings/reverse/%20hello%20world
-Accept: application/json
-
-###
-
-# Strings - reverse: trailing space
-GET {{HostAddress}}/strings/reverse/hello%20world%20
-Accept: application/json
-
-###
-
-# Users - Get all
+# Users - Get all (app DB / AppDbContext)
+# Expects at least the seeded demo user
 GET {{HostAddress}}/api/users
 Accept: application/json
 
 ###
 
-# Users - Get by ID
-GET {{HostAddress}}/api/users/1
-Accept: application/json
+# Auth - Login with seeded demo user (app DB / AppDbContext)
+# Expects 200 with access_token in response body
+POST {{HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "demo",
+  "password": "Demo123"
+}
 
 ###
