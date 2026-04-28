@@ -6,9 +6,21 @@ body {
     background-size: 20px 20px;
 }
 
-body * {
+body,
+input,
+button,
+select,
+textarea,
+.form-control,
+.nav-link,
+.dropdown-item,
+.lead,
+.text-muted,
+.btn {
     font-family: 'Inter', sans-serif !important;
 }
+
+
 
 /*big comic titles*/
 h1, h2, .comic-title, .navbar-brand {
@@ -99,22 +111,7 @@ h1, h2, .comic-title, .navbar-brand {
     font-weight: 500;
     color: #6b7280 !important;
 }
-body,
-body *,
-input,
-button,
-select,
-textarea,
-.form-control,
-.form-control::placeholder,
-input::placeholder,
-.nav-link,
-.dropdown-item,
-.lead,
-.text-muted,
-.btn {
-    font-family: 'Inter', sans-serif !important;
-}
+
 
 h1,
 h2,
