@@ -34,11 +34,13 @@ public class CheckoutsController : ControllerBase
 {
     private readonly AppDbContext _appDb;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<CheckoutsController> _logger;
 
-    public CheckoutsController(AppDbContext appDb, IHttpClientFactory httpClientFactory)
+    public CheckoutsController(AppDbContext appDb, IHttpClientFactory httpClientFactory, ILogger<CheckoutsController> logger)
     {
         _appDb = appDb;
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -102,6 +104,11 @@ public class CheckoutsController : ControllerBase
         if (userId is null)
         {
             return Unauthorized(new ErrorResponse("UNAUTHORIZED", "A valid user token is required."));
+        }
+
+        if (request.ComicId <= 0)
+        {
+            return BadRequest(new ErrorResponse("INVALID_COMIC_ID", "ComicId must be a positive integer."));
         }
 
         var userExists = await _appDb.Users.AnyAsync(u => u.UserId == userId.Value);
@@ -218,7 +225,21 @@ public class CheckoutsController : ControllerBase
                 comic!.Title, comic.IssueNumber, comic.YearPublished,
                 comic.Publisher, "available", null, null
             );
-            await backend.PutAsJsonAsync($"api/comics/{checkout.ComicId}", statusUpdate);
+            var updateResponse = await backend.PutAsJsonAsync($"api/comics/{checkout.ComicId}", statusUpdate);
+            if (!updateResponse.IsSuccessStatusCode)
+            {
+                // Log but do not fail the return — the checkout row is already committed.
+                // The comic status will remain "checked_out" until manually corrected.
+                _logger.LogError(
+                    "Failed to mark comic {ComicId} as available after checkout {CheckoutId} was returned. Backend status: {StatusCode}",
+                    checkout.ComicId, checkout.CheckoutId, updateResponse.StatusCode);
+            }
+        }
+        else
+        {
+            _logger.LogError(
+                "Could not fetch comic {ComicId} from backend during return of checkout {CheckoutId}. Backend status: {StatusCode}",
+                checkout.ComicId, id, comicResponse.StatusCode);
         }
 
         return Ok(checkout);
@@ -231,9 +252,11 @@ public class CheckoutsController : ControllerBase
     /// </summary>
     private HttpClient CreateBackendClient()
     {
+        // IHttpClientFactory.CreateClient returns a new HttpClient wrapper each call,
+        // so mutating DefaultRequestHeaders is safe — each call gets its own instance.
+        // The underlying HttpMessageHandler is pooled, but the HttpClient (and its
+        // DefaultRequestHeaders) is not shared across calls.
         var client = _httpClientFactory.CreateClient("backend");
-        // Replace any existing Authorization header with the service API key.
-        // The backend's ApiKeyMiddleware validates this on every request.
         client.DefaultRequestHeaders.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ApiKeyConstants.ServiceApiKey);
         return client;
@@ -247,7 +270,7 @@ public class CheckoutsController : ControllerBase
 }
 
 /// <summary>Request body for creating a new checkout.</summary>
-public record CheckoutRequest(int ComicId);
+file record CheckoutRequest(int ComicId);
 
 /// <summary>
 /// Local DTO for deserializing comic data from the backend API (<c>GET /api/comics/{id}</c>).
