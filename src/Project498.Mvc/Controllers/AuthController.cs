@@ -34,12 +34,12 @@ public class AuthController : ControllerBase
 
         if (await _context.Users.AnyAsync(u => u.Username == user.Username))
         {
-            return BadRequest(new ErrorResponse("USERNAME_EXISTS", "Username already exists."));
+            return Conflict(new ErrorResponse("USERNAME_EXISTS", "Username already exists."));
         }
 
         if (await _context.Users.AnyAsync(u => u.Email == user.Email))
         {
-            return BadRequest(new ErrorResponse("EMAIL_EXISTS", "Email already exists."));
+            return Conflict(new ErrorResponse("EMAIL_EXISTS", "Email already exists."));
         }
 
         user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
@@ -49,9 +49,9 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var user = _context.Users.SingleOrDefault(u => u.Username == request.Username);
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == request.Username);
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
             return Unauthorized(new ErrorResponse("INVALID_CREDENTIALS", "Invalid username or password."));
 

@@ -119,14 +119,14 @@ public class UsersController : ControllerBase
             return NotFound();
 
         if (!BCrypt.Net.BCrypt.Verify(dto.OldPassword, user.Password))
-            return BadRequest("Incorrect old password");
+            return BadRequest(new ErrorResponse("INVALID_OLD_PASSWORD", "The current password is incorrect."));
 
         if (dto.NewPassword != dto.ConfirmPassword)
-            return BadRequest("Passwords do not match");
+            return BadRequest(new ErrorResponse("PASSWORD_MISMATCH", "New password and confirmation do not match."));
 
         user.Password = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
         await _context.SaveChangesAsync();
 
-        return Ok("Password updated");
+        return Ok(new { message = "Password updated." });
     }
 }
