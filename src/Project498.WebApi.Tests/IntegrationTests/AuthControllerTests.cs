@@ -2,9 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Project498.WebApi.Controllers;
-using Project498.WebApi.Data;
-using Project498.WebApi.Models;
+using Project498.Mvc.Controllers;
+using Project498.Mvc.Data;
+using Project498.Mvc.Models;
 
 namespace Project498.WebApi.Tests.IntegrationTests;
 
@@ -156,12 +156,12 @@ public class AuthControllerTests
 
         var result = await controller.Register(user);
 
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        var conflict = Assert.IsType<ConflictObjectResult>(result);
 
-        var error = Assert.IsType<ErrorResponse>(badRequest.Value);
+        var error = Assert.IsType<ErrorResponse>(conflict.Value);
         Assert.Equal("USERNAME_EXISTS", error.Code);
     }
-    
+
     [Fact]
     public async Task Register_ReturnsBadRequest_WhenEmailExists()
     {
@@ -178,9 +178,9 @@ public class AuthControllerTests
 
         var result = await controller.Register(user);
 
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        var conflict = Assert.IsType<ConflictObjectResult>(result);
 
-        var error = Assert.IsType<ErrorResponse>(badRequest.Value);
+        var error = Assert.IsType<ErrorResponse>(conflict.Value);
         Assert.Equal("EMAIL_EXISTS", error.Code);
     }
     
@@ -195,7 +195,7 @@ public class AuthControllerTests
             Password = "password123"
         };
 
-        var result = controller.Login(request);
+        var result = await controller.Login(request);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
 
@@ -206,7 +206,7 @@ public class AuthControllerTests
 
         Assert.NotNull(tokenValue);
     }
-    
+
     [Fact]
     public async Task Login_ReturnsUnauthorized_WhenPasswordIncorrect()
     {
@@ -218,11 +218,11 @@ public class AuthControllerTests
             Password = "wrongpassword"
         };
 
-        var result = controller.Login(request);
+        var result = await controller.Login(request);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
-    
+
     [Theory]
     [InlineData("wrongusername")]
     [InlineData("Johndoe")]
@@ -236,11 +236,11 @@ public class AuthControllerTests
             Password = "password123"
         };
 
-        var result = controller.Login(request);
+        var result = await controller.Login(request);
 
         Assert.IsType<UnauthorizedObjectResult>(result);
     }
-    
+
     [Fact]
     public async Task Login_ReturnsToken_WithCorrectClaims()
     {
@@ -252,7 +252,7 @@ public class AuthControllerTests
             Password = "password123"
         };
 
-        var result = controller.Login(request);
+        var result = await controller.Login(request);
         var okResult = Assert.IsType<OkObjectResult>(result);
 
         // extract token using reflection
