@@ -1,21 +1,43 @@
-﻿services:
+services:
+  # Public-facing MVC frontend.
+  # Serves static HTML from wwwroot and proxies /api/comics and /api/characters
+  # to project498.webapi. All user auth (JWT) is handled here.
+  project498.mvc:
+    image: project498.mvc
+    build:
+      context: .
+      dockerfile: Project498.Mvc/Dockerfile
+    environment:
+      - ConnectionStrings__AppConnection=Host=db;Database=project498_app;Username=postgres;Password=postgres
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:8080
+      - Jwt__Secret=your-super-secret-key-change-this-in-production-min-32-chars
+      - Jwt__ExpiresInHours=1
+      # Tell the MVC proxy where to find the backend API inside the Docker network.
+      - BackendApi__BaseUrl=http://project498.webapi:8080
+    depends_on:
+      db:
+        condition: service_healthy
+      project498.webapi:
+        condition: service_started
+    ports:
+      - "8080:8080"
+
+  # Internal backend Web API — comics and characters only.
+  # NOT exposed on a host port: only reachable from within the Docker network.
+  # Every inbound request must carry Authorization: Bearer <ApiKeyConstants.ServiceApiKey>.
   project498.webapi:
     image: project498.webapi
     build:
       context: .
       dockerfile: Project498.WebApi/Dockerfile
     environment:
-      - ConnectionStrings__AppConnection=Host=db;Database=project498_app;Username=postgres;Password=postgres
       - ConnectionStrings__ComicsConnection=Host=db_comics;Database=project498_comics;Username=postgres;Password=postgres
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://0.0.0.0:8080
     depends_on:
-      db:
-        condition: service_healthy
       db_comics:
         condition: service_healthy
-    ports:
-      - "8080:8080"
 
   db:
     image: postgres:latest
