@@ -56,7 +56,7 @@ document.getElementById("accountForm").addEventListener("input", async (e) => {
     };
 
     try {
-        const response = await fetch(`api/users/${userId}`, {
+        const response = await fetch(`/api/users/${userId}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
