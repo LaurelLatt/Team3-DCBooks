@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;500;600;700;800&display=swap');
+
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Signika', sans-serif;
     background-color: #f4f6f9;
     
     background-image: radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px);
@@ -17,18 +19,18 @@ textarea,
 .lead,
 .text-muted,
 .btn {
-    font-family: 'Inter', sans-serif !important;
+    font-family: 'Signika', sans-serif !important;
 }
 
 
-
 /*big comic titles*/
-h1, h2, .comic-title, .navbar-brand {
+h1, 
+h2,
+.navbar-brand,
+.comic-title,
+.card-title{
     font-family: 'Bangers', cursive !important;
     letter-spacing: 2px;
-    line-height: 1.2;
-    font-weight: 400;
-    transform: skew(-2deg);
 }
 
 .navbar {
@@ -55,9 +57,19 @@ h1, h2, .comic-title, .navbar-brand {
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
 }
 
+.lead {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #6b7280 !important;
+}
+
 .form-control {
     border-radius: 14px;
     padding: 0.85rem 1rem;
+}
+
+input::placeholder {
+    color: #9ca3af;
 }
 
 .comic-card {
@@ -89,14 +101,14 @@ h1, h2, .comic-title, .navbar-brand {
 }
 
 .card-title {
-    font-family: 'Bangers', cursive !important;
     font-size: 1.5rem;
-    letter-spacing: 1.5px;
-    line-height: 1.3;
-    text-shadow: none;
+    font-weight: 600;
+    letter-spacing: 1px;
 }
 
-.card-text {
+.card-text, 
+.description-text {
+    font-family: 'Merriweather', serif;
     font-size: 0.95rem;
     line-height: 1.4;
 }
@@ -105,19 +117,6 @@ h1, h2, .comic-title, .navbar-brand {
     color: #4b5563;
 }
 
-.lead {
-    font-family: 'Inter', sans-serif !important;
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: #6b7280 !important;
-}
-
-
-h1,
-h2,
-.comic-title,
-.navbar-brand,
-.card-title {
-    font-family: 'Bangers', cursive !important;
-    letter-spacing: 1px;
+.btn {
+    border-radius: 10px;
 }
