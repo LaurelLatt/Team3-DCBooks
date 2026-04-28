@@ -76,13 +76,16 @@ public class ProxyController : ControllerBase
         _logger.LogDebug("Proxying {Method} {Path} to backend", Request.Method, targetPath);
 
         // Build the outbound request with the same method and body.
-        var outboundRequest = new HttpRequestMessage(
+        // using ensures disposal of the request and response, including any held sockets and stream resources.
+        using var outboundRequest = new HttpRequestMessage(
             new HttpMethod(Request.Method),
             targetPath
         );
 
-        // Copy the request body for methods that carry one (POST, PUT, PATCH).
-        if (Request.ContentLength > 0 || Request.Headers.ContainsKey("Transfer-Encoding"))
+        // Copy the request body for methods that typically carry one.
+        // Guarding by method verb is more reliable than checking ContentLength (which can be null
+        // even when a body is present, e.g., POST with no Content-Length header).
+        if (HttpMethods.IsPost(Request.Method) || HttpMethods.IsPut(Request.Method) || HttpMethods.IsPatch(Request.Method))
         {
             outboundRequest.Content = new StreamContent(Request.Body);
 
@@ -102,20 +105,34 @@ public class ProxyController : ControllerBase
 
         // Dispatch to the backend via the named HttpClient (base URL configured in Program.cs).
         var client = _httpClientFactory.CreateClient("backend");
-        var backendResponse = await client.SendAsync(
-            outboundRequest,
-            HttpCompletionOption.ResponseHeadersRead
-        );
-
-        // Stream the response back to the caller without buffering.
-        Response.StatusCode = (int)backendResponse.StatusCode;
-
-        if (backendResponse.Content.Headers.ContentType is not null)
+        HttpResponseMessage backendResponse;
+        try
         {
-            Response.ContentType = backendResponse.Content.Headers.ContentType.ToString();
+            backendResponse = await client.SendAsync(outboundRequest, HttpCompletionOption.ResponseHeadersRead);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Backend unreachable while proxying {Method} {Path}", Request.Method, targetPath);
+            return StatusCode(502);
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "Backend timeout while proxying {Method} {Path}", Request.Method, targetPath);
+            return StatusCode(504);
         }
 
-        await backendResponse.Content.CopyToAsync(Response.Body);
+        using (backendResponse)
+        {
+            // Stream the response back to the caller without buffering.
+            Response.StatusCode = (int)backendResponse.StatusCode;
+
+            if (backendResponse.Content.Headers.ContentType is not null)
+            {
+                Response.ContentType = backendResponse.Content.Headers.ContentType.ToString();
+            }
+
+            await backendResponse.Content.CopyToAsync(Response.Body);
+        }
 
         return new EmptyResult();
     }
