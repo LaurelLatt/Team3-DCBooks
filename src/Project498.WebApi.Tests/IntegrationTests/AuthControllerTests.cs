@@ -141,7 +141,7 @@ public class AuthControllerTests
     }
     
     [Fact]
-    public async Task Register_ReturnsBadRequest_WhenUsernameExists()
+    public async Task Register_ReturnsConflict_WhenUsernameExists()
     {
         var (controller, _) = await CreateAuthControllerWithSeededUser();
 
@@ -163,7 +163,7 @@ public class AuthControllerTests
     }
 
     [Fact]
-    public async Task Register_ReturnsBadRequest_WhenEmailExists()
+    public async Task Register_ReturnsConflict_WhenEmailExists()
     {
         var (controller, _) = await CreateAuthControllerWithSeededUser();
 
