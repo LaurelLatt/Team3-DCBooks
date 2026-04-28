@@ -2,25 +2,13 @@ using Project498.WebApi.Models;
 
 namespace Project498.WebApi.Data;
 
+/// <summary>
+/// Seeds the comics database with initial characters, comics, and character links
+/// for development and first-run environments.
+/// App DB seeding (users) is handled by Project498.Mvc.
+/// </summary>
 public static class DbSeeder
 {
-    public static async Task SeedAppAsync(AppDbContext db)
-    {
-        if (!db.Users.Any())
-        {
-            db.Users.Add(new User
-            {
-                FirstName = "Demo",
-                LastName = "Demoson",
-                Username = "demo",
-                Email = "demo@demo.com",
-                Password = BCrypt.Net.BCrypt.HashPassword("Demo123")
-            });
-
-            await db.SaveChangesAsync();
-        }
-    }
-
     public static async Task SeedComicsAsync(ComicsDbContext comicsDb)
     {
         if (!comicsDb.Characters.Any())

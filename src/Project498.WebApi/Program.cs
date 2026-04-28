@@ -1,46 +1,22 @@
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Project498.WebApi.Data;
+using Project498.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("AppConnection")));
-
+// ComicsDbContext is the only database this service owns.
+// AppDbContext (users, checkouts) lives in Project498.Mvc.
 builder.Services.AddDbContext<ComicsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("ComicsConnection")));
 
-var jwtSecret = builder.Configuration["Jwt:Secret"]!;
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
-            ValidateIssuer = false,
-            ValidateAudience = false
-        };
-    });
-
-builder.Services.AddAuthorization();
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
-
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
-    await DbSeeder.SeedAppAsync(db);
-
     var comicsDb = scope.ServiceProvider.GetRequiredService<ComicsDbContext>();
     await comicsDb.Database.EnsureCreatedAsync();
     await DbSeeder.SeedComicsAsync(comicsDb);
@@ -48,16 +24,18 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/openapi/v1.json", "Project498 API");
+        options.SwaggerEndpoint("/openapi/v1.json", "Project498 Backend API");
     });
 }
 
 app.UseHttpsRedirection();
 
-app.UseStaticFiles();
-
-app.UseAuthentication();
-app.UseAuthorization();
+// Validate the service-to-service API key on every inbound request.
+// This replaces user JWT authentication — the backend has no concept of user identity.
+// Only Project498.Mvc is trusted to call this API.
+// See: Project498.WebApi.Middleware.ApiKeyMiddleware
+// See: Project498.WebApi.Constants.ApiKeyConstants
+app.UseMiddleware<ApiKeyMiddleware>();
 
 app.MapControllers();
 
