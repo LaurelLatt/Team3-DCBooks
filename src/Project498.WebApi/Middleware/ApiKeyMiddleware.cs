@@ -42,6 +42,15 @@ public class ApiKeyMiddleware
     /// </summary>
     public async Task InvokeAsync(HttpContext context)
     {
+        // Allow Swagger UI and OpenAPI spec through without authentication.
+        var path = context.Request.Path.Value ?? string.Empty;
+        if (path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase))
+        {
+            await _next(context);
+            return;
+        }
+
         // Read the Authorization header. Format must be: "Bearer <key>"
         var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
 

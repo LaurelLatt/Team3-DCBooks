@@ -4,6 +4,7 @@ using Project498.Mvc.Data;
 using Project498.Mvc.Models;
 using Project498.Mvc.Controllers;
 using Project498.Mvc.Models.DTOs;
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
 
 namespace Project498.WebApi.Tests.UnitTests;
 
