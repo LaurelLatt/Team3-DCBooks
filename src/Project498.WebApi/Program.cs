@@ -4,7 +4,24 @@ using Project498.WebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, _, _) =>
+    {
+        document.Components ??= new Microsoft.OpenApi.OpenApiComponents();
+        document.Components.SecuritySchemes["ApiKey"] = new Microsoft.OpenApi.OpenApiSecurityScheme
+        {
+            Type = Microsoft.OpenApi.SecuritySchemeType.Http,
+            Scheme = "bearer",
+            Description = "Enter the service API key (from ApiKeyConstants.ServiceApiKey)"
+        };
+        document.Security.Add(new Microsoft.OpenApi.OpenApiSecurityRequirement
+        {
+            [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("ApiKey", document)] = []
+        });
+        return Task.CompletedTask;
+    });
+});
 builder.Services.AddControllers();
 
 // ComicsDbContext is the only database this service owns.
