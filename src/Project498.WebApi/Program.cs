@@ -9,12 +9,14 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer((document, _, _) =>
     {
         document.Components ??= new Microsoft.OpenApi.OpenApiComponents();
+        document.Components.SecuritySchemes ??= new Dictionary<string, Microsoft.OpenApi.IOpenApiSecurityScheme>();
         document.Components.SecuritySchemes["ApiKey"] = new Microsoft.OpenApi.OpenApiSecurityScheme
         {
             Type = Microsoft.OpenApi.SecuritySchemeType.Http,
             Scheme = "bearer",
             Description = "Enter the service API key (from ApiKeyConstants.ServiceApiKey)"
         };
+        document.Security ??= new List<Microsoft.OpenApi.OpenApiSecurityRequirement>();
         document.Security.Add(new Microsoft.OpenApi.OpenApiSecurityRequirement
         {
             [new Microsoft.OpenApi.OpenApiSecuritySchemeReference("ApiKey", document)] = []
