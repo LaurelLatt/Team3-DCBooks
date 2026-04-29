@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -24,9 +25,38 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
             ValidateIssuer = false,
-            ValidateAudience = false
+            ValidateAudience = false,
+            ValidateLifetime = true
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var db = context.HttpContext.RequestServices
+                    .GetRequiredService<AppDbContext>();
+
+                var jwt = context.SecurityToken as JwtSecurityToken;
+                var rawToken = jwt?.RawData;
+
+                if (rawToken == null)
+                {
+                    context.Fail("Invalid token");
+                    return Task.CompletedTask;
+                }
+
+                var isRevoked = db.RevokedTokens
+                    .Any(t => t.Token == rawToken);
+
+                if (isRevoked)
+                {
+                    context.Fail("Token has been revoked");
+                }
+
+                return Task.CompletedTask;
+            }
         };
     });
+
 
 builder.Services.AddAuthorization();
 

@@ -58,6 +58,31 @@ public class AuthController : ControllerBase
         var token = GenerateToken(user);
         return Ok(new { access_token = token, token });
     }
+    
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        var token = Request.Headers["Authorization"]
+            .ToString()
+            .Replace("Bearer ", "");
+
+        if (string.IsNullOrEmpty(token))
+            return BadRequest(new ErrorResponse("NO_TOKEN", "Token is required."));
+
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(token);
+
+        var revokedToken = new RevokedToken
+        {
+            Token = token,
+            Expiration = jwt.ValidTo
+        };
+
+        _context.RevokedTokens.Add(revokedToken);
+        _context.SaveChanges();
+
+        return Ok(new { message = "Logged out successfully." });
+    }
 
     private string GenerateToken(User user)
     {
@@ -86,4 +111,11 @@ public class LoginRequest
 {
     public string Username { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+}
+
+public class RevokedToken
+{
+    public int Id { get; set; }
+    public string Token { get; set; } = string.Empty;
+    public DateTime Expiration { get; set; }
 }

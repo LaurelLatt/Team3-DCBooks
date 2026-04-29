@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -274,5 +275,97 @@ public class AuthControllerTests
         Assert.NotNull(usernameClaim);
 
         Assert.Equal("johndoe", usernameClaim.Value);
+    }
+    
+    [Fact]
+    public async Task Logout_AddsTokenToBlacklist_AndReturnsOk()
+    {
+        // Arrange
+        var (controller, context) = await CreateAuthControllerWithSeededUser();
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+
+        // create a real JWT (so ReadJwtToken doesn't crash)
+        var token = new JwtSecurityTokenHandler().WriteToken(
+            new JwtSecurityToken(expires: DateTime.UtcNow.AddHours(1))
+        );
+
+        controller.Request.Headers["Authorization"] = $"Bearer {token}";
+
+        // Act
+        var result = controller.Logout();
+
+        // Assert response
+        Assert.IsType<OkObjectResult>(result);
+
+        // Assert DB change
+        var revokedToken = context.RevokedTokens.FirstOrDefault();
+        Assert.NotNull(revokedToken);
+        Assert.Equal(token, revokedToken.Token);
+    }
+    
+    [Fact]
+    public async Task Logout_ReturnsBadRequest_WhenNoToken()
+    {
+        // Arrange
+        var (controller, _) = await CreateAuthControllerWithSeededUser();
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+
+        // no Authorization header
+
+        // Act
+        var result = controller.Logout();
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result); // or BadRequestResult depending on your code
+    }
+    
+    [Fact]
+    public async Task Logout_ReturnsBadRequest_WhenTokenIsEmpty()
+    {
+        var (controller, _) = await CreateAuthControllerWithSeededUser();
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+
+        controller.Request.Headers["Authorization"] = "Bearer ";
+
+        var result = controller.Logout();
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+    
+    [Fact]
+    public async Task Logout_SavesTokenExpiration()
+    {
+        var (controller, context) = await CreateAuthControllerWithSeededUser();
+
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
+
+        var expiration = DateTime.UtcNow.AddHours(2);
+
+        var token = new JwtSecurityTokenHandler().WriteToken(
+            new JwtSecurityToken(expires: expiration)
+        );
+
+        controller.Request.Headers["Authorization"] = $"Bearer {token}";
+
+        controller.Logout();
+
+        var revokedToken = context.RevokedTokens.First();
+
+        Assert.True(revokedToken.Expiration > DateTime.UtcNow);
     }
 }

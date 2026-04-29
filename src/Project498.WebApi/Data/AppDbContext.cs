@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Project498.WebApi.Controllers;
 using Project498.WebApi.Models;
 
 namespace Project498.WebApi.Data;
@@ -11,6 +12,8 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Checkout> Checkouts => Set<Checkout>();
+    
+    public DbSet<RevokedToken> RevokedTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
