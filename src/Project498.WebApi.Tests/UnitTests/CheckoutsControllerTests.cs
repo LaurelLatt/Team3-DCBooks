@@ -1,9 +1,14 @@
+using System.Net;
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Project498.WebApi.Controllers;
+using Project498.Mvc.Data;
+using Project498.Mvc.Controllers;
 using Project498.WebApi.Data;
+using Project498.Mvc.Models;
+using Microsoft.Extensions.Logging.Abstractions;
 using Project498.WebApi.Models;
 
 namespace Project498.WebApi.Tests.UnitTests;
@@ -26,6 +31,57 @@ public class CheckoutsControllerTests
             .Options;
 
         return new AppDbContext(options);
+    }
+    
+    private HttpClient CreateHttpClient(Func<HttpRequestMessage, HttpResponseMessage> handler)
+    {
+        return new HttpClient(new FakeHttpMessageHandler(handler))
+        {
+            BaseAddress = new Uri("http://localhost")
+        };
+    }
+    
+    private HttpResponseMessage DefaultHttpHandler(HttpRequestMessage req)
+    {
+        if (req.Method == HttpMethod.Get)
+        {
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(@"{
+                ""comicId"":1,
+                ""title"":""Batman"",
+                ""issueNumber"":1,
+                ""yearPublished"":2020,
+                ""publisher"":""DC"",
+                ""status"":""available"",
+                ""checkedOutBy"":null,
+                ""characterIds"":[],
+                ""characterNames"":[]
+            }", Encoding.UTF8, "application/json")
+            };
+        }
+
+        if (req.Method == HttpMethod.Put)
+        {
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        }
+
+        return new HttpResponseMessage(HttpStatusCode.BadRequest);
+    }
+    
+    private CheckoutsController CreateController(
+        AppDbContext? appDb = null,
+        Func<HttpRequestMessage, HttpResponseMessage>? httpHandler = null)
+    {
+        appDb ??= CreateFreshAppDbContext();
+
+        httpHandler ??= DefaultHttpHandler;
+
+        var httpClient = CreateHttpClient(httpHandler);
+        var httpFactory = new FakeHttpClientFactory(httpClient);
+        var logger = NullLogger<CheckoutsController>.Instance;
+
+        return new CheckoutsController(appDb, httpFactory, logger);
     }
     
     private void SetUser(ControllerBase controller, int? userId)
@@ -52,16 +108,16 @@ public class CheckoutsControllerTests
     [Fact]
     public async Task GetCheckouts_ReturnsAllOrdered()
     {
+        
         var appDb = CreateFreshAppDbContext();
-        var comicsDb = CreateFreshDbContext();
+
+        var controller = CreateController(appDb);
 
         appDb.Checkouts.AddRange(
             new Checkout { CheckoutId = 1, CheckoutDate = DateTime.UtcNow.AddDays(-1) },
             new Checkout { CheckoutId = 2, CheckoutDate = DateTime.UtcNow }
         );
         await appDb.SaveChangesAsync();
-
-        var controller = new CheckoutsController(appDb, comicsDb);
 
         var result = await controller.GetCheckouts();
 
@@ -76,12 +132,11 @@ public class CheckoutsControllerTests
     public async Task GetCheckout_ReturnsCheckout_WhenFound()
     {
         var appDb = CreateFreshAppDbContext();
-        var comicsDb = CreateFreshDbContext();
 
         appDb.Checkouts.Add(new Checkout { CheckoutId = 1 });
         await appDb.SaveChangesAsync();
 
-        var controller = new CheckoutsController(appDb, comicsDb);
+        var controller = CreateController(appDb);
 
         var result = await controller.GetCheckout(1);
 
@@ -92,7 +147,7 @@ public class CheckoutsControllerTests
     [Fact]
     public async Task GetCheckout_ReturnsNotFound_WhenMissing()
     {
-        var controller = new CheckoutsController(CreateFreshAppDbContext(), CreateFreshDbContext());
+        var controller = CreateController();
 
         var result = await controller.GetCheckout(999);
 
@@ -102,7 +157,7 @@ public class CheckoutsControllerTests
     [Fact]
     public async Task Checkout_ReturnsUnauthorized_WhenNoUser()
     {
-        var controller = new CheckoutsController(CreateFreshAppDbContext(), CreateFreshDbContext());
+        var controller = CreateController();
 
         SetUser(controller, null);
 
@@ -115,9 +170,9 @@ public class CheckoutsControllerTests
     public async Task Checkout_ReturnsUserNotFound()
     {
         var appDb = CreateFreshAppDbContext();
-        var comicsDb = CreateFreshDbContext();
 
-        var controller = new CheckoutsController(appDb, comicsDb);
+        var controller = CreateController(appDb);
+        
         SetUser(controller, 1);
 
         var result = await controller.Checkout(new CheckoutRequest(1));
@@ -129,12 +184,15 @@ public class CheckoutsControllerTests
     public async Task Checkout_ReturnsComicNotFound()
     {
         var appDb = CreateFreshAppDbContext();
-        var comicsDb = CreateFreshDbContext();
 
         appDb.Users.Add(new User { UserId = 1 });
         await appDb.SaveChangesAsync();
 
-        var controller = new CheckoutsController(appDb, comicsDb);
+        var controller = CreateController(
+            appDb,
+            req => new HttpResponseMessage(HttpStatusCode.NotFound)
+        );
+        
         SetUser(controller, 1);
 
         var result = await controller.Checkout(new CheckoutRequest(1));
@@ -146,15 +204,29 @@ public class CheckoutsControllerTests
     public async Task Checkout_ReturnsConflict_WhenComicUnavailable()
     {
         var appDb = CreateFreshAppDbContext();
-        var comicsDb = CreateFreshDbContext();
 
         appDb.Users.Add(new User { UserId = 1 });
-        comicsDb.Comics.Add(new Comic { ComicId = 1, Status = "checked_out" });
 
         await appDb.SaveChangesAsync();
-        await comicsDb.SaveChangesAsync();
 
-        var controller = new CheckoutsController(appDb, comicsDb);
+        var controller = CreateController(
+            appDb,
+            req => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(@"{
+            ""comicId"":1,
+            ""title"":""Batman"",
+            ""issueNumber"":1,
+            ""yearPublished"":2020,
+            ""publisher"":""DC"",
+            ""status"":""checked_out"",
+            ""checkedOutBy"":1,
+            ""characterIds"":[],
+            ""characterNames"":[]
+        }")
+            }
+        );
+        
         SetUser(controller, 1);
 
         var result = await controller.Checkout(new CheckoutRequest(1));
@@ -174,7 +246,8 @@ public class CheckoutsControllerTests
         await appDb.SaveChangesAsync();
         await comicsDb.SaveChangesAsync();
 
-        var controller = new CheckoutsController(appDb, comicsDb);
+        var controller = CreateController(appDb);
+        
         SetUser(controller, 1);
 
         var result = await controller.Checkout(new CheckoutRequest(1));
@@ -182,16 +255,16 @@ public class CheckoutsControllerTests
         var created = Assert.IsType<CreatedAtActionResult>(result);
         var checkout = Assert.IsType<Checkout>(created.Value);
 
-        Assert.Equal(1, checkout.UserId);
-
         var comic = await comicsDb.Comics.FindAsync(1);
-        Assert.Equal("checked_out", comic.Status);
+        Assert.Equal(1, checkout.UserId);
+        Assert.Equal(1, checkout.ComicId);
+        Assert.Equal("checked_out", checkout.Status);
     }
     
     [Fact]
     public async Task Return_ReturnsUnauthorized_WhenNoUser()
     {
-        var controller = new CheckoutsController(CreateFreshAppDbContext(), CreateFreshDbContext());
+        var controller = CreateController();
         SetUser(controller, null);
 
         var result = await controller.Return(1);
@@ -202,7 +275,7 @@ public class CheckoutsControllerTests
     [Fact]
     public async Task Return_ReturnsNotFound_WhenMissing()
     {
-        var controller = new CheckoutsController(CreateFreshAppDbContext(), CreateFreshDbContext());
+        var controller = CreateController();
         SetUser(controller, 1);
 
         var result = await controller.Return(1);
@@ -219,7 +292,7 @@ public class CheckoutsControllerTests
         appDb.Checkouts.Add(new Checkout { CheckoutId = 1, UserId = 2 });
         await appDb.SaveChangesAsync();
 
-        var controller = new CheckoutsController(appDb, comicsDb);
+        var controller = CreateController(appDb);
         SetUser(controller, 1);
 
         var result = await controller.Return(1);
@@ -243,7 +316,7 @@ public class CheckoutsControllerTests
 
         await appDb.SaveChangesAsync();
 
-        var controller = new CheckoutsController(appDb, comicsDb);
+        var controller = CreateController(appDb);
         SetUser(controller, 1);
 
         var result = await controller.Return(1);
@@ -255,7 +328,6 @@ public class CheckoutsControllerTests
     public async Task Return_SuccessfullyReturnsComic()
     {
         var appDb = CreateFreshAppDbContext();
-        var comicsDb = CreateFreshDbContext();
 
         appDb.Checkouts.Add(new Checkout
         {
@@ -265,27 +337,49 @@ public class CheckoutsControllerTests
             Status = "checked_out"
         });
 
-        comicsDb.Comics.Add(new Comic
-        {
-            ComicId = 1,
-            Status = "checked_out",
-            CheckedOutBy = 1
-        });
-
         await appDb.SaveChangesAsync();
-        await comicsDb.SaveChangesAsync();
 
-        var controller = new CheckoutsController(appDb, comicsDb);
+        var controller = CreateController(appDb);
         SetUser(controller, 1);
 
         var result = await controller.Return(1);
 
         var ok = Assert.IsType<OkObjectResult>(result);
         var checkout = Assert.IsType<Checkout>(ok.Value);
-
+        
         Assert.Equal("returned", checkout.Status);
+        Assert.NotNull(checkout.ReturnDate);
+    }
+}
 
-        var comic = await comicsDb.Comics.FindAsync(1);
-        Assert.Equal("available", comic.Status);
+class FakeHttpClientFactory : IHttpClientFactory
+{
+    private readonly HttpClient _client;
+
+    public FakeHttpClientFactory(HttpClient client)
+    {
+        _client = client;
+    }
+
+    public HttpClient CreateClient(string name)
+    {
+        return _client;
+    }
+}
+
+class FakeHttpMessageHandler : HttpMessageHandler
+{
+    private readonly Func<HttpRequestMessage, HttpResponseMessage> _handler;
+
+    public FakeHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> handler)
+    {
+        _handler = handler;
+    }
+
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        return Task.FromResult(_handler(request));
     }
 }
