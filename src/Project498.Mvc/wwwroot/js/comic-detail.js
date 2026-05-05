@@ -88,7 +88,6 @@ async function checkoutComic(){
     checkoutMessage.innerHTML = "";
     
     const token = localStorage.getItem("accessToken");
-    
     if (!token) {
         checkoutMessage.innerHTML = `
             <div class="alert alert-warning">
