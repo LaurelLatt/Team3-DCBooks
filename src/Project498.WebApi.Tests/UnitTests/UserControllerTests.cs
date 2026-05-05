@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Project498.WebApi.Data;
-using Project498.WebApi.Models;
-using Project498.WebApi.Controllers;
-using Project498.WebApi.Models.DTOs;
+using Project498.Mvc.Data;
+using Project498.Mvc.Models;
+using Project498.Mvc.Controllers;
+using Project498.Mvc.Models.DTOs;
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
 
 namespace Project498.WebApi.Tests.UnitTests;
 
@@ -309,7 +310,8 @@ public class UserControllerTests
         var ok = Assert.IsType<OkObjectResult>(result);
 
         var user = await context.Users.FindAsync(1);
-        Assert.Equal(ok.Value, "Password updated");
+        var message = ok.Value?.GetType().GetProperty("message")?.GetValue(ok.Value)?.ToString();
+        Assert.Equal("Password updated.", message);
         Assert.True(BCrypt.Net.BCrypt.Verify("newpass", user.Password));
     }
     
@@ -329,9 +331,10 @@ public class UserControllerTests
         var result = await controller.ChangePassword(dto);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal("Incorrect old password", badRequest.Value);
+        var error = Assert.IsType<ErrorResponse>(badRequest.Value);
+        Assert.Equal("INVALID_OLD_PASSWORD", error.Code);
     }
-    
+
     [Fact]
     public async Task ChangePassword_ReturnsBadRequest_WhenNewPasswordMismatch()
     {
@@ -348,7 +351,8 @@ public class UserControllerTests
         var result = await controller.ChangePassword(dto);
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal("Passwords do not match", badRequest.Value);
+        var error = Assert.IsType<ErrorResponse>(badRequest.Value);
+        Assert.Equal("PASSWORD_MISMATCH", error.Code);
     }
     
     [Fact]
@@ -361,6 +365,6 @@ public class UserControllerTests
 
         var result = await controller.ChangePassword(dto);
 
-        Assert.IsType<NotFoundResult>(result);
+        Assert.IsType<NotFoundObjectResult>(result);
     }
 }

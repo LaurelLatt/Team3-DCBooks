@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Project498.WebApi\Project498.WebApi.csproj" />
+    <ProjectReference Include="..\Project498.Mvc\Project498.Mvc.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project498.WebApi.Data;
@@ -102,7 +101,6 @@ public class ComicsController(ComicsDbContext comicsDb) : ControllerBase
             : Ok(comic);
     }
 
-    [Authorize]
     [HttpPost]
     public async Task<IActionResult> AddComic([FromBody] ComicUpsertRequest request)
     {
@@ -140,7 +138,6 @@ public class ComicsController(ComicsDbContext comicsDb) : ControllerBase
         return await GetComic(comic.ComicId);
     }
 
-    [Authorize]
     [HttpPut("{id}")]
     public async Task<IActionResult> EditComic(int id, [FromBody] ComicUpsertRequest request)
     {
@@ -177,7 +174,6 @@ public class ComicsController(ComicsDbContext comicsDb) : ControllerBase
         return await GetComic(id);
     }
 
-    [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteComic(int id)
     {
