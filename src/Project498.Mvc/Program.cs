@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Project498.Mvc.Data;
@@ -59,7 +60,11 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-// Serve static HTML/CSS/JS from wwwroot (index.html, login.html, etc.).
+// Serve static HTML/CSS/JS from wwwroot. Default document for "/" is login first, then home.
+app.UseDefaultFiles(new DefaultFilesOptions
+{
+    DefaultFileNames = new List<string> { "login.html", "index.html" }
+});
 app.UseStaticFiles();
 
 app.UseAuthentication();
