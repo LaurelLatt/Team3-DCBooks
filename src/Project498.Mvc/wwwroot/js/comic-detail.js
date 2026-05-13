@@ -16,6 +16,36 @@ const checkoutMessage = document.getElementById("checkoutMessage");
 
 let currentComicId     = null;
 let currentComicStatus = null;
+let currentComicSource = "dc";
+
+function getUserIdFromToken() {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return null;
+
+    try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+
+        return (
+            payload.user_id ||
+            payload.nameid ||
+            payload.sub ||
+            payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+            null
+        );
+    } catch (error) {
+        console.error("Invalid token:", error);
+        return null;
+    }
+}
+
+function getCheckedOutByLabel(checkedOutByUserId) {
+    if (checkedOutByUserId == null) return "Nobody";
+
+    const me = getUserIdFromToken();
+    return me != null && String(me) === String(checkedOutByUserId)
+        ? "You"
+        : "Another user";
+}
 
 function getParamsFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -51,7 +81,8 @@ async function loadComic() {
         return;
     }
 
-    currentComicId = comicId;
+    currentComicId     = comicId;
+    currentComicSource = source === "marvel" ? "marvel" : "dc";
 
     try {
         let comic;
@@ -72,7 +103,7 @@ async function loadComic() {
         comicIssue.textContent        = comic.issueNumber;
         comicPublisher.textContent    = comic.publisher;
         comicYear.textContent         = comic.yearPublished || "—";
-        comicCheckedOutBy.textContent = comic.checkedOutBy ?? "Nobody";
+        comicCheckedOutBy.textContent = getCheckedOutByLabel(comic.checkedOutBy);
         comicCharacters.textContent   = comic.characterNames?.length
             ? comic.characterNames.join(", ")
             : "No characters listed.";
@@ -80,18 +111,56 @@ async function loadComic() {
         if (source === "marvel") {
             comicDescription.textContent = comic.description
                 || `${comic.title} is a Marvel comic.`;
-            currentComicStatus = "available";
-            setStatusBadge("available");
-            checkoutButton.disabled = true;
-            checkoutMessage.innerHTML = `
-                <div class="alert alert-info">
-                    Checkout is available for DC catalog comics only.
-                </div>`;
+            checkoutMessage.innerHTML = "";
+
+            try {
+                const availRes = await fetch(`/api/checkouts/marvel/${comicId}/availability`);
+                if (availRes.ok) {
+                    const { available } = await availRes.json();
+                    if (!available) {
+                        currentComicStatus = "checked_out";
+                        setStatusBadge("checked_out");
+                        comicCheckedOutBy.textContent = "Another user";
+
+                        const token = localStorage.getItem("accessToken");
+                        if (token) {
+                            const mineRes = await fetch(`/api/checkouts/marvel/${comicId}/availability/me`, {
+                                headers: { "Authorization": `Bearer ${token}` }
+                            });
+                            if (mineRes.ok) {
+                                const mine = await mineRes.json();
+                                if (mine?.isMine) {
+                                    comicCheckedOutBy.textContent = "You";
+                                }
+                            }
+                        }
+                    } else {
+                        currentComicStatus = "available";
+                        setStatusBadge("available");
+                        comicCheckedOutBy.textContent = "Nobody";
+                    }
+                } else {
+                    currentComicStatus = "available";
+                    setStatusBadge("available");
+                    comicCheckedOutBy.textContent = "Nobody";
+                }
+            } catch {
+                currentComicStatus = "available";
+                setStatusBadge("available");
+                comicCheckedOutBy.textContent = "Nobody";
+            }
         } else {
             comicDescription.textContent =
                 `${comic.title} is issue #${comic.issueNumber}, published by ${comic.publisher} in ${comic.yearPublished}.`;
             currentComicStatus = comic.status;
             setStatusBadge(comic.status);
+
+            // Never show an ID — only "Nobody", "You", or "Another user".
+            if ((comic.status || "").toLowerCase() !== "available") {
+                comicCheckedOutBy.textContent = getCheckedOutByLabel(comic.checkedOutBy);
+            } else {
+                comicCheckedOutBy.textContent = "Nobody";
+            }
         }
 
     } catch (error) {
@@ -123,7 +192,10 @@ async function checkoutComic() {
                 "Content-Type":  "application/json",
                 "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({ comicId: Number(currentComicId) })
+            body: JSON.stringify({
+                comicId: Number(currentComicId),
+                comicSource: currentComicSource
+            })
         });
 
         const data = await response.json().catch(() => null);

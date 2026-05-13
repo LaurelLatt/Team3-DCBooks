@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Project498.Mvc.Constants;
 using Project498.Mvc.Models;
 
 namespace Project498.Mvc.Data;
@@ -37,6 +38,8 @@ public class AppDbContext : DbContext
             entity.Property(e => e.CheckoutId).HasColumnName("checkout_id");
             entity.Property(e => e.UserId).IsRequired().HasColumnName("user_id");
             entity.Property(e => e.ComicId).IsRequired().HasColumnName("comic_id");
+            entity.Property(e => e.ComicSource).IsRequired().HasMaxLength(20).HasColumnName("comic_source")
+                .HasDefaultValue(ComicSourceConstants.Dc);
             entity.Property(e => e.CheckoutDate).IsRequired().HasColumnName("checkout_date");
             entity.Property(e => e.DueDate).IsRequired().HasColumnName("due_date");
             entity.Property(e => e.ReturnDate).HasColumnName("return_date");

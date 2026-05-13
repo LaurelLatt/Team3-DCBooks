@@ -15,6 +15,8 @@ services:
       - Jwt__ExpiresInHours=1
       # Tell the MVC proxy where to find the backend API inside the Docker network.
       - BackendApi__BaseUrl=http://project498.webapi:8080
+      # Marvel catalog on the host (adjust if you run the Marvel service in compose).
+      - MarvelApi__BaseUrl=http://host.docker.internal:8082
     depends_on:
       db:
         condition: service_healthy
