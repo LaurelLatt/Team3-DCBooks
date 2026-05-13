@@ -9,6 +9,7 @@ using Project498.Mvc.Constants;
 using Project498.WebApi.Data;
 using Project498.Mvc.Models;
 using Microsoft.Extensions.Logging.Abstractions;
+using Project498.Mvc.Controllers;
 using Project498.WebApi.Models;
 
 namespace Project498.WebApi.Tests.UnitTests;
