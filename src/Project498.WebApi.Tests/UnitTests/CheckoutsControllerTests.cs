@@ -5,10 +5,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Project498.Mvc.Data;
-using Project498.Mvc.Controllers;
+using Project498.Mvc.Constants;
 using Project498.WebApi.Data;
 using Project498.Mvc.Models;
 using Microsoft.Extensions.Logging.Abstractions;
+using Project498.Mvc.Controllers;
 using Project498.WebApi.Models;
 
 namespace Project498.WebApi.Tests.UnitTests;
@@ -71,14 +72,15 @@ public class CheckoutsControllerTests
     
     private CheckoutsController CreateController(
         AppDbContext? appDb = null,
-        Func<HttpRequestMessage, HttpResponseMessage>? httpHandler = null)
+        Func<HttpRequestMessage, HttpResponseMessage>? httpHandler = null,
+        HttpClient? marvelHttpClient = null)
     {
         appDb ??= CreateFreshAppDbContext();
 
         httpHandler ??= DefaultHttpHandler;
 
         var httpClient = CreateHttpClient(httpHandler);
-        var httpFactory = new FakeHttpClientFactory(httpClient);
+        var httpFactory = new FakeHttpClientFactory(httpClient, marvelHttpClient);
         var logger = NullLogger<CheckoutsController>.Instance;
 
         return new CheckoutsController(appDb, httpFactory, logger);
@@ -167,19 +169,153 @@ public class CheckoutsControllerTests
     }
     
     [Fact]
+    public async Task Checkout_ReturnsBadRequest_WhenInvalidComicSource()
+    {
+        var controller = CreateController();
+
+        SetUser(controller, 1);
+
+        var result = await controller.Checkout(new CheckoutRequest(1, "bogus"));
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
     public async Task Checkout_ReturnsUserNotFound()
     {
         var appDb = CreateFreshAppDbContext();
 
         var controller = CreateController(appDb);
-        
+
         SetUser(controller, 1);
 
         var result = await controller.Checkout(new CheckoutRequest(1));
 
         Assert.IsType<NotFoundObjectResult>(result);
     }
-    
+
+    [Fact]
+    public async Task Checkout_Marvel_CreatesCheckout_WhenValid()
+    {
+        var appDb = CreateFreshAppDbContext();
+        appDb.Users.Add(new User { UserId = 1 });
+        await appDb.SaveChangesAsync();
+
+        var marvelClient = CreateHttpClient(req =>
+        {
+            Assert.Contains("api/comics/42", req.RequestUri!.ToString(), StringComparison.Ordinal);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """{"id":42,"title":"Marvel Test","author":"A","description":"D"}""",
+                    Encoding.UTF8,
+                    "application/json")
+            };
+        });
+
+        var controller = CreateController(appDb, _ => throw new InvalidOperationException("DC backend must not be called."), marvelClient);
+        SetUser(controller, 1);
+
+        var result = await controller.Checkout(new CheckoutRequest(42, ComicSourceConstants.Marvel));
+
+        var created = Assert.IsType<CreatedAtActionResult>(result);
+        var checkout = Assert.IsType<Checkout>(created.Value);
+        Assert.Equal(42, checkout.ComicId);
+        Assert.Equal(ComicSourceConstants.Marvel, checkout.ComicSource);
+    }
+
+    [Fact]
+    public async Task Checkout_Marvel_ReturnsConflict_WhenAlreadyOnLoan()
+    {
+        var appDb = CreateFreshAppDbContext();
+        appDb.Users.AddRange(new User { UserId = 1 }, new User { UserId = 2 });
+        appDb.Checkouts.Add(new Checkout
+        {
+            UserId = 2,
+            ComicId = 7,
+            ComicSource = ComicSourceConstants.Marvel,
+            Status = "checked_out",
+            CheckoutDate = DateTime.UtcNow,
+            DueDate = DateTime.UtcNow.AddDays(14)
+        });
+        await appDb.SaveChangesAsync();
+
+        var marvelClient = CreateHttpClient(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """{"id":7,"title":"On Loan","author":"B","description":""}""",
+                Encoding.UTF8,
+                "application/json")
+        });
+
+        var controller = CreateController(appDb, DefaultHttpHandler, marvelClient);
+        SetUser(controller, 1);
+
+        var result = await controller.Checkout(new CheckoutRequest(7, ComicSourceConstants.Marvel));
+
+        Assert.IsType<ConflictObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task Return_Marvel_SucceedsWithoutCallingBackend()
+    {
+        var appDb = CreateFreshAppDbContext();
+
+        appDb.Checkouts.Add(new Checkout
+        {
+            CheckoutId = 1,
+            UserId = 1,
+            ComicId = 99,
+            ComicSource = ComicSourceConstants.Marvel,
+            Status = "checked_out",
+            CheckoutDate = DateTime.UtcNow,
+            DueDate = DateTime.UtcNow.AddDays(14)
+        });
+
+        await appDb.SaveChangesAsync();
+
+        var controller = CreateController(
+            appDb,
+            _ => throw new InvalidOperationException("DC backend must not be called for Marvel return."),
+            marvelHttpClient: null);
+
+        SetUser(controller, 1);
+
+        var result = await controller.Return(1);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var checkout = Assert.IsType<Checkout>(ok.Value);
+        Assert.Equal("returned", checkout.Status);
+        Assert.NotNull(checkout.ReturnDate);
+    }
+
+    [Fact]
+    public async Task GetMarvelComicAvailability_ReturnsFalse_WhenOnLoan()
+    {
+        var appDb = CreateFreshAppDbContext();
+        appDb.Checkouts.Add(new Checkout
+        {
+            UserId = 1,
+            ComicId = 5,
+            ComicSource = ComicSourceConstants.Marvel,
+            Status = "checked_out",
+            CheckoutDate = DateTime.UtcNow,
+            DueDate = DateTime.UtcNow.AddDays(14)
+        });
+        await appDb.SaveChangesAsync();
+
+        var controller = CreateController(appDb);
+
+        var result = await controller.GetMarvelComicAvailability(5);
+
+        var ok = Assert.IsType<OkObjectResult>(result);
+        var payload = ok.Value;
+        Assert.NotNull(payload);
+        var availableProp = payload.GetType().GetProperty("available");
+        Assert.NotNull(availableProp);
+        Assert.Equal(false, availableProp.GetValue(payload));
+    }
+
     [Fact]
     public async Task Checkout_ReturnsComicNotFound()
     {
@@ -192,14 +328,14 @@ public class CheckoutsControllerTests
             appDb,
             req => new HttpResponseMessage(HttpStatusCode.NotFound)
         );
-        
+
         SetUser(controller, 1);
 
         var result = await controller.Checkout(new CheckoutRequest(1));
 
         Assert.IsType<NotFoundObjectResult>(result);
     }
-    
+
     [Fact]
     public async Task Checkout_ReturnsConflict_WhenComicUnavailable()
     {
@@ -226,14 +362,14 @@ public class CheckoutsControllerTests
         }")
             }
         );
-        
+
         SetUser(controller, 1);
 
         var result = await controller.Checkout(new CheckoutRequest(1));
 
         Assert.IsType<ConflictObjectResult>(result);
     }
-    
+
     [Fact]
     public async Task Checkout_CreatesCheckout_WhenValid()
     {
@@ -258,6 +394,7 @@ public class CheckoutsControllerTests
         var comic = await comicsDb.Comics.FindAsync(1);
         Assert.Equal(1, checkout.UserId);
         Assert.Equal(1, checkout.ComicId);
+        Assert.Equal(ComicSourceConstants.Dc, checkout.ComicSource);
         Assert.Equal("checked_out", checkout.Status);
     }
     
@@ -334,6 +471,7 @@ public class CheckoutsControllerTests
             CheckoutId = 1,
             UserId = 1,
             ComicId = 1,
+            ComicSource = ComicSourceConstants.Dc,
             Status = "checked_out"
         });
 
@@ -354,17 +492,19 @@ public class CheckoutsControllerTests
 
 class FakeHttpClientFactory : IHttpClientFactory
 {
-    private readonly HttpClient _client;
+    private readonly HttpClient _backend;
+    private readonly HttpClient? _marvel;
 
-    public FakeHttpClientFactory(HttpClient client)
+    public FakeHttpClientFactory(HttpClient backend, HttpClient? marvel = null)
     {
-        _client = client;
+        _backend = backend;
+        _marvel = marvel;
     }
 
-    public HttpClient CreateClient(string name)
-    {
-        return _client;
-    }
+    public HttpClient CreateClient(string name) =>
+        string.Equals(name, "marvel", StringComparison.OrdinalIgnoreCase) && _marvel is not null
+            ? _marvel
+            : _backend;
 }
 
 class FakeHttpMessageHandler : HttpMessageHandler

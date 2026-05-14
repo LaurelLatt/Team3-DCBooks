@@ -5,6 +5,31 @@ const publisherFilter = document.getElementById("publisherFilter");
 
 let comics = [];
 
+/** Merge app checkout state so Marvel cards show Checked Out when on loan. */
+async function applyMarvelCheckoutStatus(marvelList) {
+    if (!marvelList.length) return marvelList;
+
+    try {
+        const res = await fetch("/api/checkouts/marvel/on-loan-ids");
+        if (!res.ok) return marvelList;
+
+        const data = await res.json();
+        const ids = data.comicIds ?? data.ComicIds ?? [];
+        const onLoan = new Set(ids.map(Number));
+
+        return marvelList.map(c => {
+            const id = Number(c.comicId);
+            const loaned = onLoan.has(id);
+            return {
+                ...c,
+                status: loaned ? "checked_out" : "available"
+            };
+        });
+    } catch {
+        return marvelList;
+    }
+}
+
 async function loadComics() {
     comicList.innerHTML = `<div class="col-12"><div class="alert alert-info">Loading comics...</div></div>`;
 
@@ -23,9 +48,12 @@ async function loadComics() {
         return;
     }
 
+    let marvelRows = marvelResult.status === "fulfilled" ? marvelResult.value : [];
+    marvelRows = await applyMarvelCheckoutStatus(marvelRows);
+
     comics = [
         ...dcResult.value,
-        ...(marvelResult.status === "fulfilled" ? marvelResult.value : [])
+        ...marvelRows
     ];
 
     comicList.innerHTML = "";

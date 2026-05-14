@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,11 @@ using Project498.Mvc.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 
 // App database — users and checkouts.
 // Comics/characters live in Project498.WebApi and are accessed via HttpClient.
@@ -45,6 +50,14 @@ builder.Services.AddHttpClient("backend", client =>
     client.BaseAddress = new Uri(baseUrl);
 });
 
+// Marvel catalog service (same contract as the browser: GET /api/comics, GET /api/comics/{id}).
+builder.Services.AddHttpClient("marvel", client =>
+{
+    var baseUrl = builder.Configuration["MarvelApi:BaseUrl"]
+        ?? throw new InvalidOperationException("MarvelApi:BaseUrl is not configured.");
+    client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -52,6 +65,13 @@ if (app.Environment.IsDevelopment())
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.EnsureCreatedAsync();
+    // EnsureCreated does not alter existing tables; add comic_source when upgrading a dev DB.
+    if (db.Database.IsRelational())
+    {
+        await db.Database.ExecuteSqlRawAsync(
+            """ALTER TABLE "Checkouts" ADD COLUMN IF NOT EXISTS comic_source character varying(20) NOT NULL DEFAULT 'dc';""");
+    }
+
     await DbSeeder.SeedAppAsync(db);
 }
 

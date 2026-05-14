@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -64,22 +66,97 @@ public class CheckoutsController : ControllerBase
     /// <summary>
     /// Returns active (unreturned) checkouts for a given user.
     /// Comic titles are not included in the response — the caller should fetch
-    /// individual comic details from <c>GET /api/comics/{id}</c> if titles are needed.
+    /// individual comic details from <c>GET /api/comics/{id}</c> (DC) or the Marvel catalog
+    /// service (Marvel) if titles are needed — use <see cref="UserActiveCheckoutDto.ComicSource"/>.
     /// </summary>
     [HttpGet("user/{userId:int}")]
     public async Task<IActionResult> GetUserCheckouts(int userId)
     {
-        var checkouts = await _appDb.Checkouts
+        var rows = await _appDb.Checkouts
             .Where(c => c.UserId == userId && c.ReturnDate == null)
             .OrderByDescending(c => c.CheckoutDate)
-            .Select(c => new {
-                c.CheckoutId,
-                c.ComicId,
-                c.DueDate,
-                c.CheckoutDate
-            })
+            .Select(c => new { c.CheckoutId, c.ComicId, c.ComicSource, c.DueDate, c.CheckoutDate })
             .ToListAsync();
+
+        var checkouts = rows.Select(static r => new UserActiveCheckoutDto(
+            r.CheckoutId,
+            r.ComicId,
+            r.ComicSource,
+            r.DueDate,
+            r.CheckoutDate));
+
         return Ok(checkouts);
+    }
+
+    /// <summary>
+    /// Whether a Marvel catalog comic is currently on loan (any user).
+    /// Used by the comic detail page; does not expose borrower identity.
+    /// </summary>
+    [HttpGet("marvel/{comicId:int}/availability")]
+    public async Task<IActionResult> GetMarvelComicAvailability(int comicId)
+    {
+        if (comicId <= 0)
+        {
+            return BadRequest(new ErrorResponse("INVALID_COMIC_ID", "ComicId must be a positive integer."));
+        }
+
+        var onLoan = await _appDb.Checkouts.AnyAsync(c =>
+            c.ComicSource == ComicSourceConstants.Marvel
+            && c.ComicId == comicId
+            && c.ReturnDate == null);
+
+        return Ok(new { available = !onLoan });
+    }
+
+    /// <summary>
+    /// Comic IDs from the Marvel catalog that have an active (unreturned) checkout.
+    /// Used by the home page to show Checked Out on Marvel cards without N per-comic requests.
+    /// </summary>
+    [HttpGet("marvel/on-loan-ids")]
+    public async Task<IActionResult> GetMarvelOnLoanComicIds()
+    {
+        var ids = await _appDb.Checkouts
+            .Where(c => c.ComicSource == ComicSourceConstants.Marvel && c.ReturnDate == null)
+            .Select(c => c.ComicId)
+            .Distinct()
+            .OrderBy(id => id)
+            .ToListAsync();
+
+        return Ok(new { comicIds = ids });
+    }
+
+    /// <summary>
+    /// For a given Marvel comic, returns whether it is available and whether the current user
+    /// is the one who has it checked out.
+    /// </summary>
+    [Authorize]
+    [HttpGet("marvel/{comicId:int}/availability/me")]
+    public async Task<IActionResult> GetMarvelComicAvailabilityForCurrentUser(int comicId)
+    {
+        var userId = GetUserIdFromToken();
+        if (userId is null)
+        {
+            return Unauthorized(new ErrorResponse("UNAUTHORIZED", "A valid user token is required."));
+        }
+
+        if (comicId <= 0)
+        {
+            return BadRequest(new ErrorResponse("INVALID_COMIC_ID", "ComicId must be a positive integer."));
+        }
+
+        var active = await _appDb.Checkouts
+            .Where(c => c.ComicSource == ComicSourceConstants.Marvel
+                        && c.ComicId == comicId
+                        && c.ReturnDate == null)
+            .Select(c => new { c.UserId })
+            .FirstOrDefaultAsync();
+
+        if (active is null)
+        {
+            return Ok(new { available = true, isMine = false });
+        }
+
+        return Ok(new { available = false, isMine = active.UserId == userId.Value });
     }
 
     /// <summary>
@@ -111,10 +188,21 @@ public class CheckoutsController : ControllerBase
             return BadRequest(new ErrorResponse("INVALID_COMIC_ID", "ComicId must be a positive integer."));
         }
 
+        var source = NormalizeComicSource(request.ComicSource);
+        if (source is null)
+        {
+            return BadRequest(new ErrorResponse("INVALID_COMIC_SOURCE", "ComicSource must be \"dc\" or \"marvel\"."));
+        }
+
         var userExists = await _appDb.Users.AnyAsync(u => u.UserId == userId.Value);
         if (!userExists)
         {
             return NotFound(new ErrorResponse("USER_NOT_FOUND", $"User {userId.Value} was not found."));
+        }
+
+        if (source == ComicSourceConstants.Marvel)
+        {
+            return await CheckoutMarvelAsync(userId.Value, request.ComicId);
         }
 
         // Call the backend to validate the comic exists and is available.
@@ -144,6 +232,7 @@ public class CheckoutsController : ControllerBase
         {
             UserId = userId.Value,
             ComicId = request.ComicId,
+            ComicSource = ComicSourceConstants.Dc,
             CheckoutDate = now,
             DueDate = now.AddDays(14),
             Status = "checked_out"
@@ -211,6 +300,11 @@ public class CheckoutsController : ControllerBase
         checkout.Status = "returned";
         await _appDb.SaveChangesAsync();
 
+        if (string.Equals(checkout.ComicSource, ComicSourceConstants.Marvel, StringComparison.OrdinalIgnoreCase))
+        {
+            return Ok(checkout);
+        }
+
         // Fetch current comic data from backend to reconstruct the full update request.
         var backend = CreateBackendClient();
         var comicResponse = await backend.GetAsync($"api/comics/{checkout.ComicId}");
@@ -262,6 +356,74 @@ public class CheckoutsController : ControllerBase
         return client;
     }
 
+    private HttpClient CreateMarvelClient() => _httpClientFactory.CreateClient("marvel");
+
+    private static string? NormalizeComicSource(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return ComicSourceConstants.Dc;
+        }
+
+        var s = raw.Trim().ToLowerInvariant();
+        if (s == ComicSourceConstants.Dc || s == ComicSourceConstants.Marvel)
+        {
+            return s;
+        }
+
+        return null;
+    }
+
+    private async Task<IActionResult> CheckoutMarvelAsync(int userId, int comicId)
+    {
+        var onLoan = await _appDb.Checkouts.AnyAsync(c =>
+            c.ComicSource == ComicSourceConstants.Marvel
+            && c.ComicId == comicId
+            && c.ReturnDate == null);
+
+        if (onLoan)
+        {
+            return Conflict(new ErrorResponse("COMIC_UNAVAILABLE", "This Marvel comic is already checked out."));
+        }
+
+        var marvel = CreateMarvelClient();
+        var comicResponse = await marvel.GetAsync($"api/comics/{comicId}");
+
+        if (comicResponse.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return NotFound(new ErrorResponse("COMIC_NOT_FOUND", $"Marvel comic {comicId} was not found."));
+        }
+
+        if (!comicResponse.IsSuccessStatusCode)
+        {
+            return StatusCode(502, new ErrorResponse("MARVEL_API_ERROR", "Could not retrieve comic from Marvel catalog service."));
+        }
+
+        var marvelComic = await comicResponse.Content.ReadFromJsonAsync<MarvelApiComicDto>(
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        if (marvelComic is null || marvelComic.Id != comicId)
+        {
+            return StatusCode(502, new ErrorResponse("MARVEL_API_ERROR", "Unexpected response from Marvel catalog service."));
+        }
+
+        var now = DateTime.UtcNow;
+        var checkout = new Checkout
+        {
+            UserId = userId,
+            ComicId = comicId,
+            ComicSource = ComicSourceConstants.Marvel,
+            CheckoutDate = now,
+            DueDate = now.AddDays(14),
+            Status = "checked_out"
+        };
+
+        _appDb.Checkouts.Add(checkout);
+        await _appDb.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetCheckout), new { id = checkout.CheckoutId }, checkout);
+    }
+
     private int? GetUserIdFromToken()
     {
         var claim = User.FindFirst("user_id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -269,8 +431,17 @@ public class CheckoutsController : ControllerBase
     }
 }
 
+/// <summary>Active checkout row returned by <c>GET /api/checkouts/user/{userId}</c>.</summary>
+file record UserActiveCheckoutDto(
+    [property: JsonPropertyName("checkoutId")] int CheckoutId,
+    [property: JsonPropertyName("comicId")] int ComicId,
+    [property: JsonPropertyName("comicSource")] string ComicSource,
+    [property: JsonPropertyName("dueDate")] DateTime DueDate,
+    [property: JsonPropertyName("checkoutDate")] DateTime CheckoutDate);
+
 /// <summary>Request body for creating a new checkout.</summary>
-public record CheckoutRequest(int ComicId);
+/// <param name="ComicSource"><c>dc</c> (default) or <c>marvel</c>.</param>
+public record CheckoutRequest(int ComicId, string? ComicSource = null);
 
 /// <summary>
 /// Local DTO for deserializing comic data from the backend API (<c>GET /api/comics/{id}</c>).
@@ -302,3 +473,5 @@ file record ComicStatusUpdateRequest(
     int? CheckedOutBy,
     List<int>? CharacterIds
 );
+
+file record MarvelApiComicDto(int Id, string? Title, string? Author, string? Description);

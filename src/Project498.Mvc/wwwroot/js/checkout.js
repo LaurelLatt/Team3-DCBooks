@@ -19,6 +19,16 @@ function getUserIdFromToken() {
     }
 }
 
+/** Normalize checkout JSON (camelCase vs PascalCase) from any checkouts endpoint. */
+function normalizeCheckoutRow(c) {
+    const checkoutId = c.checkoutId ?? c.CheckoutId;
+    const comicId = c.comicId ?? c.ComicId;
+    const rawSource = c.comicSource ?? c.ComicSource;
+    const comicSource = String(rawSource ?? "dc").toLowerCase();
+    const dueDate = c.dueDate ?? c.DueDate;
+    return { checkoutId, comicId, comicSource, dueDate };
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     const notLoggedInDiv = document.getElementById("not-logged-in");
     const comicsListDiv = document.getElementById("comics-list");
@@ -63,11 +73,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             const allCheckouts = await allResponse.json();
 
-            checkouts = allCheckouts.filter(c =>
-                String(c.userId) === String(userId) &&
-                (!c.returnDate) &&
-                String(c.status).toLowerCase() !== "returned"
-            );
+            checkouts = allCheckouts.filter(c => {
+                const uid = c.userId ?? c.UserId;
+                const ret = c.returnDate ?? c.ReturnDate;
+                const status = (c.status ?? c.Status ?? "").toString().toLowerCase();
+                return String(uid) === String(userId) && !ret && status !== "returned";
+            });
         }
 
         console.log("Checkouts loaded:", checkouts);
@@ -82,13 +93,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         for (const c of checkouts) {
-            let comicTitle = `Comic #${c.comicId}`;
+            const row = normalizeCheckoutRow(c);
+            let comicTitle = `Comic #${row.comicId}`;
 
             try {
-                const comicResponse = await fetch(`/api/comics/${c.comicId}`);
-                if (comicResponse.ok) {
-                    const comic = await comicResponse.json();
-                    comicTitle = comic.title;
+                if (row.comicSource === "marvel") {
+                    const comic = await fetchMarvelComic(String(row.comicId));
+                    comicTitle = comic.title || comicTitle;
+                } else {
+                    const comicResponse = await fetch(`/api/comics/${row.comicId}`);
+                    if (comicResponse.ok) {
+                        const comic = await comicResponse.json();
+                        comicTitle = comic.title;
+                    }
                 }
             } catch (error) {
                 console.error("Could not load comic title:", error);
@@ -100,14 +117,14 @@ document.addEventListener("DOMContentLoaded", async () => {
             item.innerHTML = `
                 <div>
                     <strong>Title:</strong> ${comicTitle}<br>
-                    <small>Due: ${new Date(c.dueDate).toLocaleDateString()}</small>
+                    <small>Due: ${new Date(row.dueDate).toLocaleDateString()}</small>
                 </div>
                 <button class="btn btn-sm btn-danger">Return</button>
             `;
 
             const returnButton = item.querySelector("button");
             returnButton.addEventListener("click", async () => {
-                await returnComic(c.checkoutId, item, returnButton, token);
+                await returnComic(row.checkoutId, item, returnButton, token);
             });
 
             comicsListDiv.appendChild(item);
